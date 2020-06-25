@@ -1,5 +1,16 @@
-import { D50, D65, HEX_RE, HEX_RE_S } from './constants';
-import { defined, extractGroups, hexToOctet } from './utils';
+import {
+  D50,
+  D65,
+  HEX_RE,
+  HEX_RE_S,
+} from './constants';
+import {
+  defined,
+  extractFnCommaGroups,
+  extractFnWhitespaceGroups,
+  extractGroups,
+  hexToOctet,
+} from './utils';
 import sRGBColor from './srgb/srgb.class';
 import XYZColor from './xyz/xyz.class';
 import LabColor from './lab/lab.class';
@@ -73,6 +84,8 @@ function color(descriptor) {
       return LabColor.lchArray(extractFnWhitespaceGroups('lch', descriptor));
     }
   }
+
+  return undefined;
 }
 
 function gray(lightness, alpha = 1) {
@@ -93,4 +106,4 @@ export {
   gray,
   grey,
   color,
-}
+};

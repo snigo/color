@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-cycle
 import XYZColor from '../xyz/xyz.class';
 
 import {
@@ -59,7 +60,7 @@ class sRGBColor {
       },
       whitePoint: {
         value: D65,
-      }
+      },
     });
   }
 
@@ -69,7 +70,6 @@ class sRGBColor {
     blue,
     alpha,
   }) {
-
     const _red = assumeOctet(red);
     const _green = assumeOctet(green);
     const _blue = assumeOctet(blue);
@@ -85,7 +85,6 @@ class sRGBColor {
     const chroma = max - min;
 
     let hue;
-    let lightness;
 
     if (chroma === 0) {
       hue = 0;
@@ -97,7 +96,7 @@ class sRGBColor {
       hue = (R - G) / chroma + 4;
     }
 
-    lightness = (max + min) / 2;
+    const lightness = (max + min) / 2;
     const saturation = getHslSaturation(chroma, lightness);
 
     return new sRGBColor({
@@ -112,7 +111,12 @@ class sRGBColor {
   }
 
   static rgbArray([red, green, blue, alpha]) {
-    return sRGBColor.rgb({ red, green, blue, alpha });
+    return sRGBColor.rgb({
+      red,
+      green,
+      blue,
+      alpha,
+    });
   }
 
   static lin({
@@ -130,7 +134,12 @@ class sRGBColor {
   }
 
   static linArray([red, green, blue, alpha]) {
-    return sRGBColor.lin({ red, green, blue, alpha });
+    return sRGBColor.lin({
+      red,
+      green,
+      blue,
+      alpha,
+    });
   }
 
   static hsl({
@@ -195,7 +204,12 @@ class sRGBColor {
   }
 
   static hslArray([hue, saturation, lightness, alpha]) {
-    return sRGBColor.hsl({ hue, saturation, lightness, alpha });
+    return sRGBColor.hsl({
+      hue,
+      saturation,
+      lightness,
+      alpha,
+    });
   }
 
   static hwb({
@@ -219,7 +233,12 @@ class sRGBColor {
   }
 
   static hwbArray([hue, whiteness, blackness, alpha]) {
-    return sRGBColor.hwb({ hue, whiteness, blackness, alpha });
+    return sRGBColor.hwb({
+      hue,
+      whiteness,
+      blackness,
+      alpha,
+    });
   }
 
   get luminance() {

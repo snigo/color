@@ -2,11 +2,15 @@ import {
   assumeAlpha,
   assumeByte,
   assumeChroma,
+  assumeHue,
   assumePercent,
+  defined,
+  modulo,
   round,
 } from '../utils';
 
 import { D50, D65 } from '../constants';
+// eslint-disable-next-line import/no-cycle
 import XYZColor from '../xyz/xyz.class';
 
 class LabColor {
@@ -54,7 +58,7 @@ class LabColor {
     const _b = assumeByte(b);
 
     if (!defined(_lightness, _a, _b)) return undefined;
-  
+
     return new LabColor({
       lightness: _lightness,
       a: _a,
@@ -66,7 +70,12 @@ class LabColor {
   }
 
   static labArray([lightness, a, b, alpha]) {
-    return LabColor.lab({ lightness, a, b, alpha });
+    return LabColor.lab({
+      lightness,
+      a,
+      b,
+      alpha,
+    });
   }
 
   static lch({
@@ -92,7 +101,12 @@ class LabColor {
   }
 
   static lchArray([lightness, chroma, hue, alpha]) {
-    return LabColor.lch({ lightness, chroma, hue, alpha });
+    return LabColor.lch({
+      lightness,
+      chroma,
+      hue,
+      alpha,
+    });
   }
 
   toXyz(whitePoint = this.whitePoint) {
@@ -108,8 +122,13 @@ class LabColor {
       fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k,
     ].map((V, i) => V * this.whitePoint[i]);
 
-    return new XYZColor({ x, y, z, alpha: this.alpha, whitePoint: this.whitePoint })
-      .adapt(whitePoint);
+    return new XYZColor({
+      x,
+      y,
+      z,
+      alpha: this.alpha,
+      whitePoint: this.whitePoint,
+    }).adapt(whitePoint);
   }
 
   toRgb() {

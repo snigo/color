@@ -1,6 +1,15 @@
 import { equal, applyMatrix } from '../utils';
-import { D50, D65_D50_MATRIX, D50_D65_MATRIX, D65, XYZ_RGB_MATRIX } from '../constants';
+import {
+  D50,
+  D65_D50_MATRIX,
+  D50_D65_MATRIX,
+  D65,
+  XYZ_RGB_MATRIX,
+} from '../constants';
+// eslint-disable-next-line import/no-cycle
 import LabColor from '../lab/lab.class';
+// eslint-disable-next-line import/no-cycle
+import sRGBColor from '../srgb/srgb.class';
 
 class XYZColor {
   constructor({
@@ -25,13 +34,16 @@ class XYZColor {
       },
       whitePoint: {
         value: whitePoint,
-      }
+      },
     });
   }
 
   adapt(whitePoint) {
     if (equal(whitePoint, this.whitePoint)) return this;
-    const [x, y, z] = applyMatrix(this.toXyzArray(), equal(whitePoint, D50) ? D65_D50_MATRIX : D50_D65_MATRIX);
+    const [x, y, z] = applyMatrix(
+      this.toXyzArray(),
+      equal(whitePoint, D50) ? D65_D50_MATRIX : D50_D65_MATRIX,
+    );
     return new XYZColor({
       x,
       y,
