@@ -52,15 +52,15 @@ export function assumeAlpha(value) {
 }
 
 export function assumeByte(value) {
-  return clamp(BYTE_RANGE, round(value, 0));
+  return clamp(BYTE_RANGE, round(value, 7));
 }
 
 export function assumeChroma(value) {
-  return clamp(CHROMA_RANGE, round(value, 3));
+  return clamp(CHROMA_RANGE, round(value, 7));
 }
 
 export function assumeHue(value) {
-  if (typeof value === 'number') return modulo(round(value, 0), 360);
+  if (typeof value === 'number') return round(modulo(value, 360), 7);
   if (typeof value !== 'string') return NaN;
   value = value.trim().toLowerCase();
 
@@ -83,19 +83,19 @@ export function assumeHue(value) {
       return NaN;
   }
 
-  return modulo(round(hue[1], 0), 360);
+  return round(modulo(hue[1], 360), 7);
 }
 
 export function assumePercent(value) {
-  if (typeof value === 'number') return clamp(ONE_RANGE, round(value, 2));
+  if (typeof value === 'number') return clamp(ONE_RANGE, round(value, 7));
   if (typeof value !== 'string' || !/%$/.test(value)) return NaN;
-  return clamp(ONE_RANGE, toNumber(value, 2));
+  return clamp(ONE_RANGE, toNumber(value, 7));
 }
 
 export function assumeOctet(value) {
   if (typeof value === 'number') return clamp(OCT_RANGE, round(value, 0));
   if (typeof value !== 'string') return NaN;
-  return clamp(OCT_RANGE, /%$/.test(value) ? fromFraction(OCT_RANGE, toNumber(value)) : round(value, 0));
+  return clamp(OCT_RANGE, /%$/.test(value) ? fromFraction(OCT_RANGE, toNumber(value, 0)) : round(value, 0));
 }
 
 export function equal(a, b) {
@@ -131,7 +131,7 @@ export function getHslSaturation(chroma, lightness) {
     saturation = chroma / ((2 - 2 * lightness) || lightness);
   }
 
-  return clamp(ONE_RANGE, round(saturation, 2));
+  return assumePercent(saturation);
 }
 
 export function hexToOctet(hex) {

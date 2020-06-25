@@ -4,9 +4,8 @@ export default [
   {
     input: 'src/color.js',
     output: {
-      file: 'min/color.js',
-      name: 'color',
-      format: 'iife',
+      file: 'lib/color.js',
+      format: 'es',
     },
     plugins: [
       terser({

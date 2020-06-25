@@ -4,7 +4,6 @@ import XYZColor from '../xyz/xyz.class';
 import {
   D65,
   OCT_RANGE,
-  ONE_RANGE,
   RGB_XYZ_MATRIX,
   D50,
 } from '../constants';
@@ -15,7 +14,6 @@ import {
   assumeHue,
   assumeOctet,
   assumePercent,
-  clamp,
   getFraction,
   getHslSaturation,
   modulo,
@@ -103,9 +101,9 @@ class sRGBColor {
       red: _red,
       green: _green,
       blue: _blue,
-      hue: modulo(round(hue * 60, 0), 360),
+      hue: assumeHue(hue * 60),
       saturation,
-      lightness: clamp(ONE_RANGE, round(lightness, 2)),
+      lightness: assumePercent(lightness),
       alpha: assumeAlpha(alpha),
     });
   }
@@ -188,14 +186,10 @@ class sRGBColor {
       blue = x;
     }
 
-    red = clamp(OCT_RANGE, round((red + b) * 255, 0));
-    green = clamp(OCT_RANGE, round((green + b) * 255, 0));
-    blue = clamp(OCT_RANGE, round((blue + b) * 255, 0));
-
     return new sRGBColor({
-      red,
-      green,
-      blue,
+      red: assumeOctet((red + b) * 255),
+      green: assumeOctet((green + b) * 255),
+      blue: assumeOctet((blue + b) * 255),
       hue: _hue,
       saturation: _saturation,
       lightness: _lightness,
@@ -225,7 +219,7 @@ class sRGBColor {
     const chroma = 1 - _whiteness - _blackness;
     const saturation = getHslSaturation(chroma, lightness);
     return sRGBColor.hsl({
-      hue,
+      hue: assumeHue(hue),
       saturation,
       lightness,
       alpha,
@@ -258,15 +252,15 @@ class sRGBColor {
   }
 
   get hrad() {
-    return round(this.hue * (Math.PI / 180), 4);
+    return round(this.hue * (Math.PI / 180), 7);
   }
 
   get hgrad() {
-    return round(this.hue / 0.9, 4);
+    return round(this.hue / 0.9, 7);
   }
 
   get hturn() {
-    return round(this.hue / 360, 4);
+    return round(this.hue / 360, 7);
   }
 
   get name() {
@@ -297,20 +291,29 @@ class sRGBColor {
     return this.toXyz(D50).toLab();
   }
 
-  toRgbString() {
+  toRgbString(format = 'absolute') {
+    const _red = format === 'relative'
+      ? `${round(getFraction(OCT_RANGE, this.red) * 100, 1)}%`
+      : this.red;
+    const _green = format === 'relative'
+      ? `${round(getFraction(OCT_RANGE, this.green) * 100, 1)}%`
+      : this.green;
+    const _blue = format === 'relative'
+      ? `${round(getFraction(OCT_RANGE, this.blue) * 100, 1)}%`
+      : this.blue;
     return this.alpha < 1
-      ? `rgb(${this.red} ${this.green} ${this.blue} / ${this.alpha})`
-      : `rgb(${this.red} ${this.green} ${this.blue})`;
+      ? `rgb(${_red} ${_green} ${_blue} / ${this.alpha})`
+      : `rgb(${_red} ${_green} ${_blue})`;
   }
 
   toHexString() {
     return `#${octetToHex(this.red)}${octetToHex(this.green)}${octetToHex(this.blue)}${this.alpha < 1 ? octetToHex(Math.round(255 * this.alpha)) : ''}`;
   }
 
-  toHslString() {
+  toHslString(precision = 1) {
     return this.alpha < 1
-      ? `hsl(${this.hue}deg ${round(this.saturation * 100, 0)}% ${round(this.lightness * 100, 0)}% / ${this.alpha})`
-      : `hsl(${this.hue}deg ${round(this.saturation * 100, 0)}% ${round(this.lightness * 100, 0)}%)`;
+      ? `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
+      : `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
   }
 }
 

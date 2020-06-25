@@ -106,4 +106,7 @@ export {
   gray,
   grey,
   color,
+  sRGBColor,
+  XYZColor,
+  LabColor,
 };

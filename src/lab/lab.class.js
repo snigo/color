@@ -5,7 +5,6 @@ import {
   assumeHue,
   assumePercent,
   defined,
-  modulo,
   round,
 } from '../utils';
 
@@ -63,8 +62,8 @@ class LabColor {
       lightness: _lightness,
       a: _a,
       b: _b,
-      chroma: round(Math.sqrt(_a ** 2 + _b ** 2), 3),
-      hue: modulo(round((Math.atan2(_b, _a) * 180) / Math.PI, 0), 360),
+      chroma: assumeChroma(Math.sqrt(_a ** 2 + _b ** 2)),
+      hue: assumeHue((Math.atan2(_b, _a) * 180) / Math.PI),
       alpha: assumeAlpha(alpha),
     });
   }
@@ -92,8 +91,8 @@ class LabColor {
 
     return new LabColor({
       lightness: _lightness,
-      a: round(_chroma * Math.cos((_hue * Math.PI) / 180), 0),
-      b: round(_chroma * Math.sin((_hue * Math.PI) / 180), 0),
+      a: assumeByte(_chroma * Math.cos((_hue * Math.PI) / 180)),
+      b: assumeByte(_chroma * Math.sin((_hue * Math.PI) / 180)),
       chroma: _chroma,
       hue: _hue,
       alpha: assumeAlpha(alpha),
@@ -120,7 +119,7 @@ class LabColor {
       fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k,
       l > k * e ? ((l + 16) / 116) ** 3 : l / k,
       fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k,
-    ].map((V, i) => V * this.whitePoint[i]);
+    ].map((V, i) => round(V * this.whitePoint[i], 7));
 
     return new XYZColor({
       x,
@@ -135,16 +134,16 @@ class LabColor {
     return this.toXyz(D65).toRgb();
   }
 
-  toLchString() {
+  toLchString(precision = 3) {
     return this.alpha < 1
-      ? `lch(${round(this.lightness * 100, 0)}% ${this.chroma} ${this.hue}deg / ${this.alpha})`
-      : `lch(${round(this.lightness * 100, 0)}% ${this.chroma} ${this.hue}deg)`;
+      ? `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg / ${this.alpha})`
+      : `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg)`;
   }
 
-  toLabString() {
+  toLabString(precision = 3) {
     return this.alpha < 1
-      ? `lab(${round(this.lightness * 100, 0)}% ${this.a} ${this.b} / ${this.alpha})`
-      : `lab(${round(this.lightness * 100, 0)}% ${this.a} ${this.b})`;
+      ? `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)} / ${this.alpha})`
+      : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
   }
 }
 
