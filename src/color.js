@@ -1,6 +1,5 @@
+/* eslint-disable import/no-cycle */
 import {
-  D50,
-  D65,
   HEX_RE,
   HEX_RE_S,
 } from './constants';
@@ -10,6 +9,7 @@ import {
   extractFnWhitespaceGroups,
   extractGroups,
   hexToOctet,
+  round,
 } from './utils';
 import sRGBColor from './srgb/srgb.class';
 import XYZColor from './xyz/xyz.class';
@@ -61,6 +61,7 @@ function color(descriptor) {
     if (descriptor.startsWith('#')) {
       const re = descriptor.length > 5 ? HEX_RE : HEX_RE_S;
       const rgba = extractGroups(re, descriptor).map(hexToOctet);
+      rgba[3] = round(rgba[3] / 255, 7);
       return sRGBColor.rgbArray(rgba);
     }
 
@@ -88,25 +89,13 @@ function color(descriptor) {
   return undefined;
 }
 
-function gray(lightness, alpha = 1) {
-  return LabColor.lab({
-    lightness,
-    a: 0,
-    b: 0,
-    alpha,
-  });
-}
-
-const grey = gray;
-
-color.D50 = D50;
-color.D65 = D65;
-
 export {
-  gray,
-  grey,
   color,
+  LabColor,
   sRGBColor,
   XYZColor,
-  LabColor,
 };
+
+export { default as gray } from './gray';
+export { default as contrast } from './contrast';
+export { mix, mixLab } from './mix';

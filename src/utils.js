@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import {
   BYTE_RANGE,
   CHROMA_RANGE,
@@ -6,6 +7,9 @@ import {
   WSP_RE,
   CMA_RE,
 } from './constants';
+import sRGBColor from './srgb/srgb.class';
+import LabColor from './lab/lab.class';
+import XYZColor from './xyz/xyz.class';
 
 export function applyMatrix(xyz, matrix) {
   return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[i][j], 0));
@@ -141,4 +145,14 @@ export function hexToOctet(hex) {
 export function octetToHex(num) {
   num = clamp(OCT_RANGE, num);
   return num.toString(16).padStart(2, '0');
+}
+
+export function approx(a, b, delta = 0) {
+  return +Math.abs(a - b).toFixed(12) <= delta;
+}
+
+export function instanceOfColor(c) {
+  return c instanceof sRGBColor
+    || c instanceof LabColor
+    || c instanceof XYZColor;
 }

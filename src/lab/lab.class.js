@@ -1,15 +1,16 @@
+/* eslint-disable import/no-cycle */
 import {
   assumeAlpha,
   assumeByte,
   assumeChroma,
   assumeHue,
   assumePercent,
+  clamp,
   defined,
   round,
 } from '../utils';
 
-import { D50, D65 } from '../constants';
-// eslint-disable-next-line import/no-cycle
+import { D50, D65, ONE_RANGE } from '../constants';
 import XYZColor from '../xyz/xyz.class';
 
 class LabColor {
@@ -108,6 +109,10 @@ class LabColor {
     });
   }
 
+  get luminance() {
+    return this.toXyz().y;
+  }
+
   toXyz(whitePoint = this.whitePoint) {
     const e = 0.008856;
     const k = 903.3;
@@ -123,7 +128,7 @@ class LabColor {
 
     return new XYZColor({
       x,
-      y,
+      y: clamp(ONE_RANGE, y),
       z,
       alpha: this.alpha,
       whitePoint: this.whitePoint,
@@ -132,6 +137,17 @@ class LabColor {
 
   toRgb() {
     return this.toXyz(D65).toRgb();
+  }
+
+  toLab() {
+    return this;
+  }
+
+  toGrayscale() {
+    return this.copyWith({
+      a: 0,
+      b: 0,
+    });
   }
 
   toLchString(precision = 3) {
@@ -144,6 +160,56 @@ class LabColor {
     return this.alpha < 1
       ? `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)} / ${this.alpha})`
       : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
+  }
+
+  opacity(value = 1) {
+    if (this.alpha === value) return this;
+    return new LabColor({
+      lightness: this.lightness,
+      a: this.a,
+      b: this.b,
+      chroma: this.chroma,
+      hue: this.hue,
+      alpha: assumeAlpha(value),
+    });
+  }
+
+  copyWith(params) {
+    if ('a' in params || 'b' in params) {
+      return LabColor.lab({
+        lightness: this.lightness,
+        a: this.b,
+        b: this.b,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('hue' in params || 'chroma' in params) {
+      return LabColor.hsl({
+        lightness: this.lightness,
+        chroma: this.chroma,
+        hue: this.hue,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('lightness' in params) {
+      return LabColor.lab({
+        lightness: this.lightness,
+        a: this.b,
+        b: this.b,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('alpha' in params) {
+      return this.opacity(params.alpha);
+    }
+
+    return this;
   }
 }
 

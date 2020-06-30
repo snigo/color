@@ -1,11 +1,12 @@
-// eslint-disable-next-line import/no-cycle
+/* eslint-disable import/no-cycle */
 import XYZColor from '../xyz/xyz.class';
 
 import {
+  D50,
   D65,
   OCT_RANGE,
+  ONE_RANGE,
   RGB_XYZ_MATRIX,
-  D50,
 } from '../constants';
 
 import {
@@ -14,6 +15,7 @@ import {
   assumeHue,
   assumeOctet,
   assumePercent,
+  clamp,
   getFraction,
   getHslSaturation,
   modulo,
@@ -265,7 +267,7 @@ class sRGBColor {
 
   get name() {
     const name = getColorName(this.toHexString().substring(0, 7));
-    return this.alpha === 1 ? name : `${name}*`;
+    return (this.alpha === 1 || !name) ? name : `${name}*`;
   }
 
   toLin() {
@@ -276,11 +278,21 @@ class sRGBColor {
       });
   }
 
+  toHwb() {
+    const rgbr = [this.red, this.green, this.blue].map((value) => value / 255);
+    return [
+      this.hue,
+      round(Math.min(...rgbr), 7),
+      round(1 - Math.max(...rgbr), 7),
+      this.alpha,
+    ];
+  }
+
   toXyz(whitePoint = this.whitePoint) {
     const [x, y, z] = applyMatrix(this.toLin(), RGB_XYZ_MATRIX).map((v) => round(v, 7));
     return new XYZColor({
       x,
-      y,
+      y: clamp(ONE_RANGE, y),
       z,
       alpha: this.alpha,
       whitePoint: this.whitePoint,
@@ -289,6 +301,23 @@ class sRGBColor {
 
   toLab() {
     return this.toXyz(D50).toLab();
+  }
+
+  toRgb() {
+    return this;
+  }
+
+  toGrayscale() {
+    if (this.saturation === 0) return this;
+    const l = this.luminance > 0.0393
+      ? ((this.luminance ** (1 / 2.4)) * 1.055 - 0.055) * 255
+      : this.luminance * 3294.6;
+    return sRGBColor.rgb({
+      red: l,
+      green: l,
+      blue: l,
+      alpha: this.alpha,
+    });
   }
 
   toRgbString(format = 'absolute') {
@@ -314,6 +343,63 @@ class sRGBColor {
     return this.alpha < 1
       ? `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
       : `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
+  }
+
+  toHwbString(precision = 1) {
+    const [h, w, b] = this.toHwb();
+    return this.alpha < 1
+      ? `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
+      : `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
+  }
+
+  opacity(value = 1) {
+    if (this.alpha === value) return this;
+    return new sRGBColor({
+      red: this.red,
+      green: this.green,
+      blue: this.blue,
+      hue: this.hue,
+      saturation: this.saturation,
+      lightness: this.lightness,
+      alpha: assumeAlpha(value),
+    });
+  }
+
+  invert() {
+    return sRGBColor.rgb({
+      red: 255 - this.red,
+      green: 255 - this.green,
+      blue: 255 - this.blue,
+      alpha: this.alpha,
+    });
+  }
+
+  copyWith(params) {
+    if ('red' in params || 'blue' in params || 'green' in params) {
+      return sRGBColor.rgb({
+        red: this.red,
+        green: this.green,
+        blue: this.blue,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('hue' in params || 'saturation' in params || 'lightness' in params) {
+      return sRGBColor.hsl({
+        hue: this.hue,
+        saturation: this.saturation,
+        lightness: this.lightness,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('alpha' in params) {
+      return this.opacity(params.alpha);
+    }
+
+    return this;
   }
 }
 

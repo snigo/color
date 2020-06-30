@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { equal, applyMatrix } from '../utils';
 import {
   D50,
@@ -6,9 +7,7 @@ import {
   D65,
   XYZ_RGB_MATRIX,
 } from '../constants';
-// eslint-disable-next-line import/no-cycle
 import LabColor from '../lab/lab.class';
-// eslint-disable-next-line import/no-cycle
 import sRGBColor from '../srgb/srgb.class';
 
 class XYZColor {
@@ -38,11 +37,23 @@ class XYZColor {
     });
   }
 
+  static get D50() {
+    return D50;
+  }
+
+  static get D65() {
+    return D65;
+  }
+
+  get luminance() {
+    return this.y;
+  }
+
   adapt(whitePoint) {
     if (equal(whitePoint, this.whitePoint)) return this;
     const [x, y, z] = applyMatrix(
       this.toXyzArray(),
-      equal(whitePoint, D50) ? D65_D50_MATRIX : D50_D65_MATRIX,
+      equal(whitePoint, XYZColor.D50) ? D65_D50_MATRIX : D50_D65_MATRIX,
     );
     return new XYZColor({
       x,
@@ -58,7 +69,10 @@ class XYZColor {
   }
 
   toLab() {
-    const xyz = (equal(this.whitePoint, D65) ? this.adapt(D50) : this).toXyzArray();
+    const xyz = (equal(this.whitePoint, XYZColor.D65)
+      ? this.adapt(XYZColor.D50)
+      : this).toXyzArray();
+
     const e = 0.008856;
     const k = 903.3;
     const [fx, fy, fz] = xyz
@@ -74,8 +88,15 @@ class XYZColor {
   }
 
   toRgb() {
-    const xyz = (equal(this.whitePoint, D65) ? this : this.adapt(D65)).toXyzArray();
+    const xyz = (equal(this.whitePoint, XYZColor.D65)
+      ? this
+      : this.adapt(XYZColor.D65)).toXyzArray();
+
     return sRGBColor.linArray(applyMatrix(xyz, XYZ_RGB_MATRIX));
+  }
+
+  toXyz() {
+    return this;
   }
 }
 
