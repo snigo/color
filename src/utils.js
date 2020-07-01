@@ -105,7 +105,7 @@ export function assumePercent(value) {
 export function assumeOctet(value) {
   if (typeof value === 'number') return clamp(OCT_RANGE, round(value, 0));
   if (typeof value !== 'string') return NaN;
-  return clamp(OCT_RANGE, /%$/.test(value) ? fromFraction(OCT_RANGE, toNumber(value, 0)) : round(value, 0));
+  return clamp(OCT_RANGE, /%$/.test(value) ? round(fromFraction(OCT_RANGE, toNumber(value)), 0) : round(value, 0));
 }
 
 export function equal(a, b) {
