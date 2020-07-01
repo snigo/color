@@ -12,11 +12,16 @@ import LabColor from './lab/lab.class';
 import XYZColor from './xyz/xyz.class';
 
 export function applyMatrix(xyz, matrix) {
-  return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[i][j], 0));
+  if (!xyz || !(Array.isArray(xyz) && xyz.length)) return undefined;
+  if (!matrix || !(Array.isArray(matrix) && xyz.length === matrix.length)) return xyz;
+  return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[j][i], 0));
 }
 
 export function clamp(range, value) {
   value = +value;
+  if (value == null || Number.isNaN(value)) return NaN;
+  if (!Array.isArray(range)) return value;
+
   if (value < range[0]) return range[0];
   if (value > range[1]) return range[1];
   return value;
@@ -28,6 +33,7 @@ export function defined(...args) {
 }
 
 export function fromFraction(range, value) {
+  if (!Array.isArray(range)) return NaN;
   return range[0] + +value * (range[1] - range[0]);
 }
 
@@ -123,6 +129,7 @@ export function extractFnWhitespaceGroups(fn, str) {
 }
 
 export function getFraction(range, value) {
+  if (!Array.isArray(range)) return NaN;
   return (+value - range[0]) / (range[1] - range[0]);
 }
 
