@@ -14,7 +14,7 @@ import XYZColor from './xyz/xyz.class';
 export function applyMatrix(xyz, matrix) {
   if (!xyz || !(Array.isArray(xyz) && xyz.length)) return undefined;
   if (!matrix || !(Array.isArray(matrix) && xyz.length === matrix.length)) return xyz;
-  return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[j][i], 0));
+  return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[i][j], 0));
 }
 
 export function clamp(range, value) {

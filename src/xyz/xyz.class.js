@@ -15,8 +15,8 @@ class XYZColor {
     x,
     y,
     z,
-    alpha,
-    whitePoint,
+    alpha = 1,
+    whitePoint = XYZColor.D50,
   }) {
     Object.defineProperties(this, {
       x: {

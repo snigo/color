@@ -74,7 +74,7 @@ function color(descriptor) {
     }
 
     if (descriptor.startsWith('hwb')) {
-      return sRGBColor.hwbArray(extractFnWhitespaceGroups('hsl', descriptor));
+      return sRGBColor.hwbArray(extractFnWhitespaceGroups('hwb', descriptor));
     }
 
     if (descriptor.startsWith('lab')) {

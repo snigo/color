@@ -282,8 +282,8 @@ class sRGBColor {
     const rgbr = [this.red, this.green, this.blue].map((value) => value / 255);
     return [
       this.hue,
-      round(Math.min(...rgbr), 7),
       round(1 - Math.max(...rgbr), 7),
+      round(Math.min(...rgbr), 7),
       this.alpha,
     ];
   }
@@ -330,8 +330,11 @@ class sRGBColor {
     const _blue = format === 'relative'
       ? `${round(getFraction(OCT_RANGE, this.blue) * 100, 1)}%`
       : this.blue;
+    const _alpha = format === 'relative'
+      ? `${round(this.alpha * 100, 0)}%`
+      : this.alpha;
     return this.alpha < 1
-      ? `rgb(${_red} ${_green} ${_blue} / ${this.alpha})`
+      ? `rgb(${_red} ${_green} ${_blue} / ${_alpha})`
       : `rgb(${_red} ${_green} ${_blue})`;
   }
 

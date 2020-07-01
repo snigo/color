@@ -37,7 +37,7 @@ test('applyMatrix helper function', () => {
     [7, 8, 9],
   ];
 
-  expect(applyMatrix(xyz, matrix)).toEqual([30, 36, 42]);
+  expect(applyMatrix(xyz, matrix)).toEqual([14, 32, 50]);
   expect(applyMatrix(xyz, [])).toEqual([1, 2, 3]);
   expect(applyMatrix(xyz)).toEqual([1, 2, 3]);
   expect(applyMatrix([], matrix)).toBeUndefined();
