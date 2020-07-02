@@ -3,7 +3,7 @@ import { color } from './color';
 import sRGBColor from './srgb/srgb.class';
 import LabColor from './lab/lab.class';
 
-export function mix(base, c, a = 0.5) {
+export function mix(base, c, a = 1) {
   const _base = (instanceOfColor(base) ? base : color(base)).toRgb();
   const _c = (instanceOfColor(c) ? c : color(c)).toRgb();
   if (!_base && !_c) return undefined;
@@ -20,7 +20,7 @@ export function mix(base, c, a = 0.5) {
   });
 }
 
-export function mixLab(base, c, a = 0.5) {
+export function mixLab(base, c, a = 1) {
   const _base = (instanceOfColor(base) ? base : color(base)).toLab();
   const _c = (instanceOfColor(c) ? c : color(c)).toLab();
   if (!_base && !_c) return undefined;

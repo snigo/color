@@ -1,7 +1,9 @@
 import sRGBColor from './srgb/srgb.class';
-// eslint-disable-next-line import/no-cycle
 import { color } from './color';
 import { round, approx, instanceOfColor } from './utils';
+import { mix, mixLab } from './mix';
+import LabColor from './lab/lab.class';
+import XYZColor from './xyz/xyz.class';
 
 function contrast(base = '#fff', c, precision = 2) {
   const _base = instanceOfColor(base) ? base : color(base);
@@ -17,7 +19,20 @@ function contrast(base = '#fff', c, precision = 2) {
     return curried;
   }
 
-  const _c = c instanceof sRGBColor ? c : color(c);
+  let _c = instanceOfColor(c) ? c : color(c);
+  if (_c.alpha < 1) {
+    if (_c instanceof sRGBColor) {
+      _c = mix(_base, _c);
+    } else if (_c instanceof LabColor) {
+      _c = mixLab(_base, _c);
+    } else if (_c instanceof XYZColor && _c.whitePoint === XYZColor.D65) {
+      _c = mix(_base, _c.toRgb()).toXyz();
+    } else if (_c instanceof XYZColor && _c.whitePoint === XYZColor.D50) {
+      _c = mixLab(_base, _c.toLab()).toXyz();
+    } else {
+      return undefined;
+    }
+  }
   const dark = Math.min(_c.luminance, _base.luminance);
   const light = Math.max(_c.luminance, _base.luminance);
 
