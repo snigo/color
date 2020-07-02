@@ -141,6 +141,31 @@ test('should parse colors with descriptor object', () => {
   expect(lch.alpha).toBe(1);
 });
 
+test('should clone instance of color class', () => {
+  const c = color('yellow');
+  const d = color(c);
+  expect(d).toBeInstanceOf(sRGBColor);
+  expect(c === d).toBe(false);
+
+  const l = color('lab(35% 23 -56)');
+  const m = color(l);
+  expect(m).toBeInstanceOf(LabColor);
+  expect(l === m).toBe(false);
+});
+
+test('should return undefined if parsing failed', () => {
+  expect(color('rbg(255 255 255)')).toBeUndefined();
+  expect(color('hls(255 25% 25%)')).toBeUndefined();
+  expect(color('hbw(255 25% 25%)')).toBeUndefined();
+  expect(color('rbga (255 255 255)')).toBeUndefined();
+  expect(color('lch(25%, 23, 255)')).toBeUndefined();
+  expect(color('xyz(0.55 0.255 0.75)')).toBeUndefined();
+  expect(color({ red: 255, green: 255, saturation: 0.8 })).toBeUndefined();
+  expect(color({ hue: 255, luminance: 0.25, saturation: 0.8 })).toBeUndefined();
+  expect(color({ X: 0.2, Y: 0.255, Z: 0.8 })).toBeUndefined();
+  expect(color({ lightness: 0.5, a: -255, chroma: 84 })).toBeUndefined();
+});
+
 test('should interpret "transparent" keyword', () => {
   expect(color('transparent')).toBeInstanceOf(sRGBColor);
   expect(color('transparent').alpha).toBe(0);
