@@ -105,4 +105,62 @@ mix('green', 'transparent', '100%').name; // "green"
 
 ## API
 
+### Contents:
+[color()](#`color()`)
+
+***
+
+a
+a
+
+a
+a
+
+a
+a
+a
+
+a
+
+a
+a
+a
+
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+a
+
+a
+a
+a
+aa
+
+a
+a
+a
+a
+a
+a
+a
+a
+
+
+
+### `color()`
+
+
 
