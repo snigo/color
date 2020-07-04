@@ -106,8 +106,17 @@ mix('green', 'transparent', '100%').name; // "green"
 ## API
 
 ### Contents:
-`[sRGBColor]()`
-[color()](#`color()`)
+[sRGBColor](#srgbcolor)
+  [sRGBColor.rgb()](#static-srgbcolorrgb)
+  [sRGBColor.rgbArray()](#static-srgbcolorrgbarray)
+  [sRGBColor.hsl()](#static-srgbcolorhsl)
+  [sRGBColor.hslArray()](#static-srgbcolorhslarray)
+  [sRGBColor.hwb()](#static-srgbcolorhwb)
+  [sRGBColor.hwbArray()](#static-srgbcolorhwbarray)
+  [sRGBColor.lin()](#static-srgbcolorlin)
+  [sRGBColor.linArray()](#static-srgbcolorlinarray)
+  
+[color()](#color-1)
 
 ***
 
@@ -135,7 +144,7 @@ Takes color descriptor object as only parameter:
 
 ***
 
-#### `static sRGBColor.rgb`
+#### `static sRGBColor.rgb()`
 
 Creates instanse of sRGBColor with provided red, green and blue values
 
@@ -149,7 +158,117 @@ Takes color descriptor object as only parameter:
 | `red`         | `number`   |                                    | Red value in 0...255 range                     |
 | `green`       | `number`   |                                    | Green value in 0...255 range                   |
 | `blue`        | `number`   |                                    | Blue value in 0...255 range                    |
-| `alpha`       | `number`   | 1                                  | Alpha value in 0...255 range                   |
+| `alpha`       | `number`   | 1                                  | Alpha value in 0...1 range                     |
+
+Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.rgbArray()`
+
+Creates instanse of sRGBColor with provided red, green, blue and alpha values in array
+
+```js
+sRGBColor.rgbArray(rgbaArray);
+```
+
+Takes array in [red, green, blue, alpha] format. If no alpha value provided, it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.hsl()`
+
+Creates instanse of sRGBColor with provided hue, saturation and lightness values
+
+```js
+sRGBColor.hsl(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**           | **Notes**                                        |
+|---------------|------------|-----------------------------|--------------------------------------------------|
+| `hue`         | `number`   |                             | Hue value in 0...360 range, representing degrees |
+| `saturation`  | `number`   |                             | Saturation value in 0...1 range                  |
+| `lightness`   | `number`   |                             | Lightness value in 0...1 range                   |
+| `alpha`       | `number`   | 1                           | Alpha value in 0...1 range                       |
+
+Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.hslArray()`
+
+Creates instanse of sRGBColor with provided hue, saturation, lightness and alpha values in array
+
+```js
+sRGBColor.hslArray(hslaArray);
+```
+
+Takes array in [hue, saturation, lightness, alpha] format. If no alpha value provided, it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.hwb()`
+
+Creates instanse of sRGBColor with provided hue, whiteness and blackness values
+
+```js
+sRGBColor.hwb(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**           | **Notes**                                        |
+|---------------|------------|-----------------------------|--------------------------------------------------|
+| `hue`         | `number`   |                             | Hue value in 0...360 range, representing degrees |
+| `whiteness`   | `number`   |                             | Whiteness value in 0...1 range                   |
+| `blackness`   | `number`   |                             | Blackness value in 0...1 range                   |
+| `alpha`       | `number`   | 1                           | Alpha value in 0...1 range                       |
+
+Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.hwbArray()`
+
+Creates instanse of sRGBColor with provided hue, whiteness, blackness and alpha values in array
+
+```js
+sRGBColor.hwbArray(hwbaArray);
+```
+
+Takes array in [hue, whiteness, blackness, alpha] format. If no alpha value provided, it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.lin()`
+
+Creates instanse of sRGBColor with provided linear values of red, green, blue components through the process of gamma decoding (applying a gamma of 1/2.2 to the values). 
+
+```js
+sRGBColor.lin(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**           | **Notes**                                      |
+|---------------|------------|-----------------------------|------------------------------------------------|
+| `red`         | `number`   |                             | Red value in 0...1 range                       |
+| `green`       | `number`   |                             | Green value in 0...1 range                     |
+| `blue`        | `number`   |                             | Blue value in 0...1 range                      |
+| `alpha`       | `number`   | 1                           | Alpha value in 0...1 range                     |
+
+Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static sRGBColor.linArray()`
+
+Creates instanse of sRGBColor with provided linear values of red, green, blue components and alpha values in array
+
+```js
+sRGBColor.linArray(linaArray);
+```
+
+Takes array in [lin-red, lin-green, lin-blue, alpha] format. If no alpha value provided, it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
 
 ### `color()`
 
