@@ -106,59 +106,50 @@ mix('green', 'transparent', '100%').name; // "green"
 ## API
 
 ### Contents:
+`[sRGBColor]()`
 [color()](#`color()`)
 
 ***
 
-a
-a
+### `sRGBColor`
 
-a
-a
+Creates instanse of sRGBColor
 
-a
-a
-a
+```js
+new sRGBColor(descriptor);
+```
 
-a
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**                  | **Notes**                                      |
+|---------------|------------|------------------------------------|------------------------------------------------|
+| `red`         | `number`   |                                    | Red value in 0...255 range                     |
+| `green`       | `number`   |                                    | Green value in 0...255 range                   |
+| `blue`        | `number`   |                                    | Blue value in 0...255 range                    |
+| `hue`         | `number`   |                                    | Hue value in 0...360 range                     |
+| `saturation`  | `number`   |                                    | Saturation value in 0...1 range                |
+| `lightness`   | `number`   |                                    | Lightness in 0...1 range                       |
+| `alpha`       | `number`   | 1                                  | Alpha value in 0...255 range                   |
+| `whitePoint`  | `number[]` | XYZColor.D65 = [0.9505, 1, 1.089]  | Illuminant white point D65 or D50              |
 
-a
-a
-a
+**NOTE**: In real life scenarios you almost never will have to use class constructor in this way and instead you are going to use one of the static methods of the class
 
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
-a
+***
 
-a
-a
-a
-aa
+#### `static sRGBColor.rgb`
 
-a
-a
-a
-a
-a
-a
-a
-a
+Creates instanse of sRGBColor with provided red, green and blue values
 
+```js
+sRGBColor.rgb(descriptor);
+```
 
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**                  | **Notes**                                      |
+|---------------|------------|------------------------------------|------------------------------------------------|
+| `red`         | `number`   |                                    | Red value in 0...255 range                     |
+| `green`       | `number`   |                                    | Green value in 0...255 range                   |
+| `blue`        | `number`   |                                    | Blue value in 0...255 range                    |
+| `alpha`       | `number`   | 1                                  | Alpha value in 0...255 range                   |
 
 ### `color()`
 
