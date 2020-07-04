@@ -106,17 +106,17 @@ mix('green', 'transparent', '100%').name; // "green"
 ## API
 
 ### Contents:
-[sRGBColor](#srgbcolor)<br>
-  [sRGBColor.rgb()](#static-srgbcolorrgb)<br>
-  [sRGBColor.rgbArray()](#static-srgbcolorrgbarray)<br>
-  [sRGBColor.hsl()](#static-srgbcolorhsl)<br>
-  [sRGBColor.hslArray()](#static-srgbcolorhslarray)<br>
-  [sRGBColor.hwb()](#static-srgbcolorhwb)<br>
-  [sRGBColor.hwbArray()](#static-srgbcolorhwbarray)<br>
-  [sRGBColor.lin()](#static-srgbcolorlin)<br>
-  [sRGBColor.linArray()](#static-srgbcolorlinarray)<br>
+* [sRGBColor](#srgbcolor)
+  * [sRGBColor.rgb()](#static-srgbcolorrgb)
+  * [sRGBColor.rgbArray()](#static-srgbcolorrgbarray)
+  * [sRGBColor.hsl()](#static-srgbcolorhsl)
+  * [sRGBColor.hslArray()](#static-srgbcolorhslarray)
+  * [sRGBColor.hwb()](#static-srgbcolorhwb)
+  * [sRGBColor.hwbArray()](#static-srgbcolorhwbarray)
+  * [sRGBColor.lin()](#static-srgbcolorlin)
+  * [sRGBColor.linArray()](#static-srgbcolorlinarray)
   
-[color()](#color-1)<br>
+* [color()](#color-1)
 
 ***
 
