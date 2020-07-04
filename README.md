@@ -115,6 +115,20 @@ mix('green', 'transparent', '100%').name; // "green"
   * [sRGBColor.hwbArray()](#static-srgbcolorhwbarray)
   * [sRGBColor.lin()](#static-srgbcolorlin)
   * [sRGBColor.linArray()](#static-srgbcolorlinarray)
+  * [sRGBColor.name](#srgbcolorname)
+  * [sRGBColor.red](#srgbcolorred)
+  * [sRGBColor.green](#srgbcolorgreen)
+  * [sRGBColor.blue](#srgbcolorblue)
+  * [sRGBColor.hue](#srgbcolorhue)
+  * [sRGBColor.hrad](#srgbcolorhrad)
+  * [sRGBColor.hgrad](#srgbcolorhgrad)
+  * [sRGBColor.hturn](#srgbcolorhturn)
+  * [sRGBColor.saturation](#srgbcolorsaturation)
+  * [sRGBColor.lightness](#srgbcolorlightness)
+  * [sRGBColor.alpha](#srgbcoloralpha)
+  * [sRGBColor.luminance](#srgbcolorluminance)
+  * [sRGBColor.mode](#srgbcolormode)
+  * [sRGBColor.whitepoint](#srgbcolorwhitepoint)
   
 * [color()](#color-1)
 
@@ -269,6 +283,217 @@ sRGBColor.linArray(linaArray);
 ```
 
 Takes array in [lin-red, lin-green, lin-blue, alpha] format. If no alpha value provided, it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `sRGBColor.name`
+
+Returns color name if color is one of CSS-supported [named colors](https://www.w3.org/TR/css-color-4/#named-colors). If color is semi-transparent (has alpha value less than 1) color name is concatenated with `*`.
+
+```js
+
+const crimson = sRGBColor.rgbArray([220, 20 ,60]);
+crimson.name; // "crimson"
+
+const semiBlack = sRGBColor.rgbArray([0, 0, 0, 0.4]);
+semiBlack.name; // "black*"
+
+```
+
+***
+
+#### `sRGBColor.red`
+#### `sRGBColor.green`
+#### `sRGBColor.blue`
+
+Return red, green and blue values of the color identifying a point in the sRGB color space. Output is a number in [0...255] range:
+
+```js
+
+import { color } from 'snigos/color';
+
+
+// Color input is case-insensitive
+const white = color('WhItE');
+white.red; // 255
+white.green; // 255
+white.blue; // 255
+
+const royalblue = color('#4169E1');
+royalblue.red; // 65
+royalblue.green; // 105
+royalblue.blue; // 225
+
+```
+
+***
+
+#### `sRGBColor.hue`
+#### `sRGBColor.hrad`
+#### `sRGBColor.hgrad`
+#### `sRGBColor.hturn`
+
+Returns the hue angle of the color on the color wheel in degrees (`hue`), radians (`hrad`), gradients (`hgrad`) and turns or cycles (`hturn`) respectively. 0 degrees is referred to red color.
+
+```js
+
+import { color } from 'snigos/color';
+
+const darkgreen = color('hsl(120deg 100% 25%)');
+darkgreen.hue; // 120
+darkmagenta.hrad; // 2.0944
+darkmagenta.hgrad; // 133.3333
+darkmagenta.hturn; // 0.3333
+
+const darkmagenta = color('hsla(-0.125turn, 65%, 35%)');
+darkmagenta.hue; // 315
+darkmagenta.hrad; // 5.4978
+darkmagenta.hgrad; // 350
+darkmagenta.hturn; // 0.875
+
+
+```
+
+***
+
+
+#### `sRGBColor.saturation`
+
+Returns the color saturation value of HSL representation **as number**. Number in [0...1] range, where 0 is completely desaturated color and 1 - fully saturated color.
+
+```js
+
+import { color } from 'snigos/color';
+
+const gold = color('#fc9');
+gold.saturation; // 1
+gold.toHslString(); // "hsl(30 100% 80%)"
+
+const slateGray = color('slategray');
+slateGray.saturation; // 0.13
+
+```
+
+***
+
+#### `sRGBColor.lightness`
+
+Returns the color lightness value of HSL representation **as number**. Number in [0...1] range, where 0 is completely dark color (black) and 1 - fully light color (white).
+
+```js
+
+import { color } from 'snigos/color';
+
+const deepSkyBlue = color('rgb(0 191 255)');
+deepSkyBlue.lightness; // 0.5
+deepSkyBlue.toHslString(); // "hsl(195 100% 50%)"
+
+const textColor = color('#2a2e2f');
+textColor.lightness; // 0.17
+
+
+```
+
+***
+
+#### `sRGBColor.alpha`
+
+Returns the value of the alpha-channel of the color. Number in [0...1] range, where 0 is completely transparent and 1 - has full opacity.
+
+```js
+
+import { color } from 'snigos/color';
+
+const blue = color('#23f');
+blue.alpha; // 1
+
+const semiTransparent = color('#23f4');
+semiTransparent.alpha; // 0.2667
+
+const transparent = color('transparent');
+transparent.alpha; // 0
+
+```
+
+***
+
+#### `sRGBColor.luminance`
+
+Returns relative luminance of the color of any point in a colorspace, normalized to 0 for darkest black and 1 for lightest white. Number in [0...1] range. Relative luminance is used for calculating color contrast.
+
+```js
+
+import { color, contrast } from 'snigos/color';
+
+const royalblue = color('#4169e1');
+royalblue.luminance; // 0.1666104
+
+const violet = color('violet');
+violet.luminance; // 0.4031848
+
+// Calculate contrast ratio
+(violet.luminance + 0.05) / (royalblue.luminance + 0.05); // 2.0921654731259443
+contrast(royalblue, violet); // 2.09
+
+```
+
+***
+
+#### `sRGBColor.hueGroup`
+#### `sRGBColor.hueGroupOffset`
+
+Returns index of the color group of the color's hue on color wheel. Color groups:
+| **hueGroup index** | **Group name**  | **Hue range** |
+|--------------------|-----------------|---------------|
+| 0                  | Red-Violet      | 315 ... 344   |
+| 1                  | Red             | 345 ... 14    |
+| 2                  | Orange          | 15 ... 44     |
+| 3                  | Yellow          | 45 ... 74     |
+| 4                  | Yellow-Green    | 75 ... 104    |
+| 5                  | Green           | 105 ... 134   |
+| 6                  | Green-Cyan      | 135 ... 164   |
+| 7                  | Cyan            | 165 ... 194   |
+| 8                  | Blue-Cyan       | 195 ... 224   |
+| 9                  | Blue            | 225 ... 254   |
+| 10                 | Blue-Violet     | 255 ... 284   |
+| 11                 | Violet          | 285 ... 314   |
+
+Property `Color.hueGroupOffset` returns hue offset within color's group. Number in [0...29] range.
+
+```js
+
+import { color } from 'snigos/color';
+
+const fire = color('#fd4523');
+fire.hue; // 9
+fire.hueGroup; // 0
+fire.hueGroupOffset; // 24
+
+const coolNavy = color('rgb(60, 20, 220)');
+coolNavy.hue; // 252
+coolNavy.hueGroup; // 8
+coolNavy.hueGroupOffset; // 27
+
+```
+
+Even though color warmth is hugely subjective, you can can presume color groups 0 - 5 as warm colors and 6 - 11 as cool, that's actually the main reason why group indexation shifted back.
+
+**NOTE:** The central color of each group will have `Color.hueGroupOffset` equal to 15, not 0.
+
+
+***
+
+#### `sRGBColor.mode`
+
+Returns mode of the color, `0` is color is light and `1` if color is dark. Useful to determine font color for certain background. It is **guaranteed** that 'black' color will always have sufficient contrast with any colors of mode "0" and otherwise 'white' color will have sufficient contrast with colors of mode "1".
+
+***
+
+#### `sRGBColor.whitePoint`
+
+Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZ.D65`: https://en.wikipedia.org/wiki/Illuminant_D65 for sRGBColor
+
+***
 
 ### `color()`
 

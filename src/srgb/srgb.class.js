@@ -242,7 +242,7 @@ class sRGBColor {
   }
 
   get mode() {
-    return +(this.luminance < 0.25);
+    return +(this.luminance < 0.18);
   }
 
   get hueGroup() {
