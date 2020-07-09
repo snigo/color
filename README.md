@@ -106,6 +106,8 @@ mix('green', 'transparent', '100%').name; // "green"
 ## API
 
 ### Contents:
+* [color()](#color-1)
+
 * [sRGBColor](#srgbcolor)
   * [sRGBColor.rgb()](#static-srgbcolorrgb)
   * [sRGBColor.rgbArray()](#static-srgbcolorrgbarray)
@@ -141,8 +143,82 @@ mix('green', 'transparent', '100%').name; // "green"
   * [sRGBColor.prototype.toHexString()](#srgbcolorprototypetohexstring)
   * [sRGBColor.prototype.toHslString()](#srgbcolorprototypetohslstring)
   * [sRGBColor.prototype.toHwbString()](#srgbcolorprototypetohwbstring)
-  
-* [color()](#color-1)
+
+
+***
+
+### `color()`
+
+Parses color from variety of string formats as well as object descriptors. Returns either sRGBColor, LabColor or XYZColor instance depending on the input, or `undefined` if parsing attempt is unsuccessful.
+
+```js
+
+import { color } from 'snigos/color';
+
+color('royalblue'); // => sRGBColor { ... } 
+
+```
+
+#### String parsing options
+
+Parses any CSS color in any format parsable by the browsers and more. Case-insensitive.
+
+```js
+
+import { color } from 'snigos/color';
+
+// Standard named colors and transparent
+color('red'); // ✅
+color('Yellow'); // ✅
+color('SaLmOn'); // ✅
+color('transparent'); // ✅
+
+// #RRGGBB hexadecimal notation
+color('#FF45AD'); // ✅
+color('#ff45AD3e'); // ✅
+color('#f4a'); // ✅
+color('#f4A3'); // ✅
+
+// RGB function notation
+color('rgb(126 13 76 / 0.34)'); // ✅
+color('RGBA(84% 5% 43% / 34%)'); // ✅
+color('rgba(126 13% 76%)'); // ✅
+color('RgB(126, 13, 76, 0.34)'); // ✅
+color('rgb( 84% , 5% , 43% , 34% )'); // ✅
+color('rgba(126,13.2%,76%)'); // ✅
+
+// HSL function notation
+color('hsl(126deg 13% 76% / 0.34)'); // ✅
+color('hsla(126 5% 43% / 34%)'); // ✅
+color('HSL(0.5TURN,13%,76%)'); // ✅
+color('hslA( 2.6rad 100% 50% )'); // ✅
+color('hsl(214grad, 13%, 76%, 0.34)'); // ✅
+
+/**
+ * !!NOTE!! All notations below only support newer whitespace notation
+ * according to CSS Color-4 spec
+ */
+
+// HWB function notation
+color('hwb(126deg 13% 76% / 0.34)'); // ✅
+color('hwb(126 5% 43% / 34%)'); // ✅
+color('HWB(0.5TURN 13% 76%)'); // ✅
+color('hWb( 2.6rad 100% 50% )'); // ✅
+
+// Lab function notation
+color('lab(46% 13 -127 / 0.34)'); // ✅
+color('LAB(65.534% 0 -34.23536)'); // ✅
+
+// LCH function notation
+color('lch(46% 106.45 127deg / 0.34)'); // ✅
+color('LCH( 65.534% 80 -3.145Rad )'); // ✅
+color('Lch(15% 140 144.5 / 50%)'); // ✅
+
+// Fanatic notations
+color('rgb(-46% 0b110001 0xff / +34e-2)'); // ✅
+color('lch(.8e2% 0b1101010 -12e-4turn)'); // ✅
+
+```
 
 ***
 
@@ -750,7 +826,7 @@ eden.toHwbString(4); // hwb(144deg 69.4118% 14.902%)
 
 ***
 
-### `color()`
+
 
 
 
