@@ -94,7 +94,7 @@ Yes! Any modification of instance will always produce new instance and all prope
 This library partually comply with CSS Color spec, it uses the same Bradford adaptation method with default D65 white point for sRGB and D50 white point for Lab (also used by Adobe products), it parses all the possible color notations defined in the spec including CSS named colors, but it also has few important differences:
 1. contrast function in this library doesn't floor (truncate) the result, but mathematically rounds it, so contrast value `4.4954` will be correctly shown as `4.5`, however `contrast.validate` function will not validate such contrast as valid according to WCAG2.0 requirements.
 2. parser of this library additionally **allows** mixed absolute and relative values like so: `rgb(50% 123 25% / .5)`, which is not valid syntax according to CSS Color spec.
-3. `mix` and `mixLab` functions of the library work completely different from `mix-color` CSS function with semi-transparent colors. Our approach is layering colors on top of each other with given alpha channel value and their approach is rather amount of color you want to mix:
+3. `mix` and `mixLab` functions of the library work different from `mix-color` CSS function with semi-transparent colors. Our approach is layering colors on top of each other, also known as alpha blending and their approach is linear interpolation (aka lerp) between two colors:
 ```js
 /**
  * If you put tansparent color on top of green the result will still be green
@@ -129,6 +129,18 @@ mix('green', 'transparent', '100%').name; // "green"
   * [sRGBColor.luminance](#srgbcolorluminance)
   * [sRGBColor.mode](#srgbcolormode)
   * [sRGBColor.whitepoint](#srgbcolorwhitepoint)
+  * [sRGBColor.prototype.copyWith()](#srgbcolorprototypecopywith)
+  * [sRGBColor.prototype.withAlpha()](#srgbcolorprototypewithalpha)
+  * [sRGBColor.prototype.invert()](#srgbcolorprototypeinvert)
+  * [sRGBColor.prototype.toLin()](#srgbcolorprototypetolin)
+  * [sRGBColor.prototype.toHwb()](#srgbcolorprototypetohwb)
+  * [sRGBColor.prototype.toLab()](#srgbcolorprototypetolab)
+  * [sRGBColor.prototype.toXyz()](#srgbcolorprototypetoxyz)
+  * [sRGBColor.prototype.toGrayscale()](#srgbcolorprototypetograyscale)
+  * [sRGBColor.prototype.toRgbString()](#srgbcolorprototypetorgbstring)
+  * [sRGBColor.prototype.toHexString()](#srgbcolorprototypetohexstring)
+  * [sRGBColor.prototype.toHslString()](#srgbcolorprototypetohslstring)
+  * [sRGBColor.prototype.toHwbString()](#srgbcolorprototypetohwbstring)
   
 * [color()](#color-1)
 
@@ -671,6 +683,72 @@ gray.luminance; // 0.1529262
 grayLab.luminance; // 0.1547457
 
 ```
+
+***
+
+#### `sRGBColor.prototype.toRgbString(format)`
+
+Returns CSS string representation of color in rgb function notation compliable with CSS Color-4 spec in two different formats: `absolute` (default) and `relative`:
+
+```js
+
+import { color } from '@snigos/color';
+
+const orange = color('orange');
+orange.toRgbString(); // rgb(255 165 0)
+orange.toRgbString('absolute'); // rgb(255 165 0)
+orange.toRgbString('relative'); // rgb(100% 64.7% 0%)
+
+```
+
+**NOTE:** color library uses newer whitespace notation for all string representations (instead of older comma-separated notation)
+
+**NOTE:** default precision of 1 decimal place is applied in relative format
+
+***
+
+#### `sRGBColor.prototype.toHexString()`
+
+Returns CSS string representation of color in #-hexadecimal notation compliable with CSS Color-4 spec
+
+```js
+
+import { color } from '@snigos/color';
+
+const mint = color('#56FF7876');
+mint.toHexString(); // #56ff7876
+mint.toRgbString(); // rgb(86 255 120 / 0.4627)
+
+```
+
+**NOTE:** all strings are normalized to lowercase
+
+**NOTE:** rgb function notation will still use `rgb` as function name even if alpha value is below 1, in contrast to older notation using `rgba` function name - it's not a bug.
+
+***
+
+#### `sRGBColor.prototype.toHslString(precision)`
+#### `sRGBColor.prototype.toHwbString(precision)`
+
+Returns CSS string representation of color in HSL and HWB function notation accordingly compliable with CSS Color-4 spec and using given precision (defaults to 1).
+
+```js
+
+import { color } from '@snigos/color';
+
+const eden = color('#264E36');
+eden.toHslString(); // hsl(144deg 34.5% 22.7%)
+eden.toHwbString(); // hwb(144deg 69.4% 14.9%)
+eden.toHslString(0); // hsl(144deg 34% 23%)
+eden.toHwbString(0); // hwb(144deg 69% 15%)
+eden.toHslString(4); // hsl(144deg 34.4828% 22.7451%)
+eden.toHwbString(4); // hwb(144deg 69.4118% 14.902%)
+
+```
+
+**NOTE:** `-deg` suffix denoting degrees will always be added to values representing color hue
+
+***
 
 ### `color()`
 
