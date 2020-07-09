@@ -172,6 +172,21 @@ mix('green', 'transparent', '100%').name; // "green"
   * [LabColor.prototype.toLabString()](#labcolorprototypetolabstring)
   * [LabColor.prototype.toLchString()](#labcolorprototypetolchstring)
 
+* [XYZColor](#xyzcolor)
+  * [XYZColor.D50](#static-xyzcolord50)
+  * [XYZColor.D65](#static-xyzcolord65)
+  * [XYZColor.x](#xyzcolorx)
+  * [XYZColor.y](#xyzcolory)
+  * [XYZColor.z](#xyzcolorz)
+  * [XYZColor.alpha](#xyzcoloralpha)
+  * [XYZColor.luminance](#xyzcolorluminance)
+  * [XYZColor.mode](#xyzcolormode)
+  * [XYZColor.whitepoint](#xyzcolorwhitepoint)
+  * [XYZColor.prototype.adapt()](#xyzcolorprototypeadapt)
+  * [XYZColor.prototype.toRgb()](#xyzcolorprototypetorgb)
+  * [XYZColor.prototype.toLab()](#xyzcolorprototypetolab)
+  * [XYZColor.prototype.toXyzArray()](#xyzcolorprototypetoxyzarray)
+
 
 ***
 
@@ -1282,3 +1297,206 @@ edenLab.toLchString(6); // lch(29.70438% 21.875044 153.636422deg)
 
 **NOTE:** `-deg` suffix denoting degrees will always be added to values representing color hue
 
+***
+
+### `XYZColor`
+
+Creates instanse of XYZColor
+
+```js
+new XYZColor(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**                    | **Notes**                                      |
+|---------------|------------|--------------------------------------|------------------------------------------------|
+| `x`           | `number`   |                                      | x value in 0...1 range                         |
+| `y`           | `number`   |                                      | y value in 0...1 range                         |
+| `z`           | `number`   |                                      | z value in 0...1 range                         |
+| `alpha`       | `number`   | 1                                    | Alpha value in 0...1 range                     |
+| `whitePoint`  | `number[]` | XYZColor.D65 = [0.9505, 1, 1.089]    | Illuminant white point D65 or D50              |
+
+***
+
+#### `static XYZColor.D50`
+
+Returns array of XYZ tristimulus values of CIE standard illuminant D50: [0.96422, 1, 0.82521]
+
+```js
+
+const xyzD50 = new XYZColor({ x: 0.79, y: 0.825, z: 0.57, whitePoint: XYZColor.D50 });
+
+```
+
+***
+
+#### `static XYZColor.D65`
+
+Returns array of XYZ tristimulus values of CIE standard illuminant D65: [0.9505, 1, 1.089]
+
+```js
+
+const xyzD65 = new XYZColor({ x: 0.79, y: 0.825, z: 0.57, whitePoint: XYZColor.D65 });
+
+```
+
+***
+
+#### `XYZColor.x`
+#### `XYZColor.y`
+#### `XYZColor.z`
+
+Returns tristimulus value `x`, `y` or `z` accordingly of the XYZColor. You can read more about meaning of these values [here](https://en.wikipedia.org/wiki/CIE_1931_color_space).
+
+```js
+
+import { color } from 'snigos/color';
+
+const cyanXyz = color('cyan').toXyz();
+cyanXyz.x; // 0.5380136
+cyanXyz.y; // 0.7873272
+cyanXyz.z; // 1
+
+```
+
+**NOTE:** you might see some libraries storing XYZ values in 0...100 range, which we've decided not to do.
+
+***
+
+#### `XYZColor.alpha`
+
+Returns the value of the alpha-channel of the color. Number in [0...1] range, where 0 is completely transparent and 1 - has full opacity.
+
+```js
+
+import { XYZColor } from 'snigos/color';
+
+const xyz = new XYZColor({ x: 0.34, y: 0.23, z: 1, alpha: 0.5 });
+xyz.alpha; // 0.5
+
+```
+
+***
+
+#### `XYZColor.luminance`
+
+Returns relative luminance of the color. In XYZ color space it is the Y value. Relative luminance is used for calculating color contrast.
+
+```js
+
+import { XYZColor, contrast } from 'snigos/color';
+
+const royalblueXyz = color('#4169e1').toXyz();
+royalblueXyz.y; // 0.1666104
+royalblueXyz.luminance; // 0.1666104
+royalblueXyz.y === royalblueXyz.luminance; // true
+
+const violet = color('violet');
+violet.luminance; // 0.4031848
+
+// Calculate contrast ratio
+(violet.luminance + 0.05) / (royalblueXyz.luminance + 0.05); // 2.0921654731259443
+contrast(royalblueXyz, violet); // 2.09
+// NOTE: You can calculate contrast between sRGBColor and XYZColor instances
+
+```
+
+***
+
+#### `XYZColor.mode`
+
+Returns mode of the color, `0` is color is light and `1` if color is dark. Useful to determine font color for certain background. It is **guaranteed** that black color will always have sufficient contrast with any colors of mode "0" and otherwise white color will have sufficient contrast with colors of mode "1".
+
+```js
+
+import { color } from 'snigos/color';
+
+const bgColorXyz = color('lab(5% 0 0)').toXyz();
+const textColor = color(bgColorXyz.mode ? 'white' : 'black');
+
+bgColorXyz.mode; // 1
+textColor.mode; // 0
+textColor.name; // white
+
+```
+
+***
+
+#### `XYZColor.whitePoint`
+
+Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZColor.D65`.
+
+***
+
+#### `LabColor.prototype.adapt(whitePiont)`
+
+Adapts XYZColor from D50 white point to D65 white point or vice versa. Returns new instance of XYZColor adapted to new white point.
+
+```js
+
+import { color, XYZColor } from '@snigos/color';
+
+const pinkXyzD65 = color('pink').toXyz();
+const pinkXyzD50 = pinkXyzD65.adapt(XYZColor.D50);
+
+pinkXyzD65.x; // 0.7086978
+pinkXyzD50.x; // 0.7244961
+
+```
+
+***
+
+#### `LabColor.prototype.toRgb()`
+
+Returns new sRGBColor instance of the color representing the color in sRGB Color space.
+
+```js
+
+import { sRGBColor, XYZColor } from '@snigos/color';
+
+const purpleBlueXyz = new XYZColor({ x: 0.1647, y: 0.07, z: 0.666 });
+const purpleBlueRgb = purpleBlueXyz.toRgb();
+
+purpleBlueRgb instanceof XYZColor; // false
+purpleBlueRgb instanceof sRGBColor; // true
+purpleBlueRgb.toHexString(); // #4e00f7
+purpleBlueRgb.toRgbString(); // rgb(78 0 247)
+
+```
+
+***
+
+#### `XYZColor.prototype.toLab()`
+
+Returns new LabColor instance of the color representing the corresponding color in CIELab Color space. If current white point is D65, white point will be adapted to D50, the white point used in Lab color space.
+
+```js
+
+import { color, LabColor, XYZColor } from '@snigos/color';
+
+const sweetCornXyz = color('#F0EAD6').toXyz();
+const sweetCornLab = sweetCornXyz.toLab();
+
+sweetCornLab instanceof XYZColor; // false
+sweetCornLab instanceof LabColor; // true
+sweetCornLab.toLchString(2); // lch(92.77% 10.52 92.1deg)
+
+sweetCornXyz.whitePoint; // [0.9505, 1, 1.089] D65 inherited from sRGB
+sweetCornLab.whitePoint; // [0.96422, 1, 0.82521] D50 as default Lab Color
+
+```
+
+***
+
+#### `XYZColor.prototype.toXyzArray()`
+
+Returns `x`, `y` and `z` values of the color in array. Alpha value **will not** be included.
+
+```js
+
+import { XYZColor } from '@snigos/color';
+
+const xyzColor = new XYZColor({ x: 0.5505, y: 0.234, z: 0.98, alpha: 0.45 });
+xyzColor.toXyzArray(); // [0.5505, 0.234, 0.98]
+
+```

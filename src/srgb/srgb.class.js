@@ -291,9 +291,9 @@ class sRGBColor {
   toXyz(whitePoint = this.whitePoint) {
     const [x, y, z] = applyMatrix(this.toLin(), RGB_XYZ_MATRIX).map((v) => round(v, 7));
     return new XYZColor({
-      x,
+      x: clamp(ONE_RANGE, x),
       y: clamp(ONE_RANGE, y),
-      z,
+      z: clamp(ONE_RANGE, z),
       alpha: this.alpha,
       whitePoint: this.whitePoint,
     }).adapt(whitePoint);

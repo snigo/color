@@ -49,6 +49,10 @@ class XYZColor {
     return this.y;
   }
 
+  get mode() {
+    return +(this.luminance < 0.18);
+  }
+
   adapt(whitePoint) {
     if (equal(whitePoint, this.whitePoint)) return this;
     const [x, y, z] = applyMatrix(

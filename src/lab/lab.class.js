@@ -143,9 +143,9 @@ class LabColor {
     ].map((V, i) => round(V * this.whitePoint[i], 7));
 
     return new XYZColor({
-      x,
+      x: clamp(ONE_RANGE, x),
       y: clamp(ONE_RANGE, y),
-      z,
+      z: clamp(ONE_RANGE, z),
       alpha: this.alpha,
       whitePoint: this.whitePoint,
     }).adapt(whitePoint);
