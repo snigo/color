@@ -355,7 +355,7 @@ class sRGBColor {
       : `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
   }
 
-  opacity(value = 1) {
+  withAlpha(value = 1) {
     if (this.alpha === value) return this;
     return new sRGBColor({
       red: this.red,

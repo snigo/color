@@ -162,7 +162,7 @@ class LabColor {
       : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
   }
 
-  opacity(value = 1) {
+  withAlpha(value = 1) {
     if (this.alpha === value) return this;
     return new LabColor({
       lightness: this.lightness,

@@ -487,13 +487,190 @@ Even though color warmth is hugely subjective, you can can presume color groups 
 
 Returns mode of the color, `0` is color is light and `1` if color is dark. Useful to determine font color for certain background. It is **guaranteed** that 'black' color will always have sufficient contrast with any colors of mode "0" and otherwise 'white' color will have sufficient contrast with colors of mode "1".
 
+```js
+
+import { color } from 'snigos/color';
+
+const backgroundColor = color('#2980B9');
+const textColor = color(backgroundColor.mode ? 'white' : 'black');
+
+backgroundColor.mode; // 1
+textColor.mode; // 0
+
+```
+
 ***
 
 #### `sRGBColor.whitePoint`
 
-Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZ.D65`: https://en.wikipedia.org/wiki/Illuminant_D65 for sRGBColor
+Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZColor.D65`: https://en.wikipedia.org/wiki/Illuminant_D65 for sRGBColor
 
 ***
+
+#### `sRGBColor.prototype.copyWith()`
+
+Copies color instance with provided parameters and returns new sRGBColor instance. Accepted parameters: `red`, `green`, `blue`, `hue`, `saturation`, `lightness`, `alpha`. Note: red, green and blue parameters have priority over hue, saturation and lightness, meaning if you use red and hue value at the same time, the latter will be ignored.
+
+```js
+
+import { color } from '@snigos/color';
+
+const maroon = color('maroon');
+const lightMaroon = maroon.copyWith({ lightness: maroon.lightness + 0.2 });
+
+maroon.lightness; // 0.25
+lightMaroon.lightness; // 0.45
+
+```
+
+***
+
+#### `sRGBColor.prototype.withAlpha()`
+
+Copies color instance with provided alpha value. Shortcut method for `.copyWith({ alpha: value })`.
+
+```js
+
+import { color } from '@snigos/color';
+
+const lipsRed = color('#fa3c24');
+const lipsRed24 = lipsRed.withAlpha(0.24);
+
+lipsRed24.alpha; // 0.24
+lipsRed24.toHexString(); // #fa3c243d
+
+```
+
+***
+
+#### `sRGBColor.prototype.invert()`
+
+Inverts color. Returns new instance of Color representing inverted color.
+
+```js
+
+import { color } from '@snigos/color';
+
+const invertedPink = color('pink').invert();
+invertedPink.toRgbString(); // rgb(0 63 52)
+
+invertedPink.invert().name; // pink
+
+```
+
+***
+
+#### `sRGBColor.prototype.toLin()`
+
+Returns array of linear (gamma decoded) values of red, green and blue.
+
+```js
+
+import { color } from '@snigos/color';
+
+const green = color('forestgreen');
+green.toLin(); // [0.0159963, 0.2581829, 0.0159963]
+
+```
+
+**NOTE**: Return value doesn't include alpha value
+
+***
+
+#### `sRGBColor.prototype.toHwb()`
+
+Returns array of hue, whiteness and blackness values of the according [HWB color model](https://en.wikipedia.org/wiki/HWB_color_model), as well as alpha channel value.
+
+```js
+
+import { color } from '@snigos/color';
+
+const cyan = color('cyan');
+cyan.toHwb(); // [180, 0, 0, 1]
+cyan.toHwbString(); // hwb(180deg 0% 0%)
+
+```
+
+***
+
+#### `sRGBColor.prototype.toLab()`
+
+Returns new LabColor instance of the color representing the color in CIELab Color space.
+
+```js
+
+import { color, sRGBColor, LabColor } from '@snigos/color';
+
+const purpleBlue = color('hwb(264 13% 0%)');
+const purpleBlueLab = purpleBlue.toLab();
+
+purpleBlueLab instanceof sRGBColor; // false
+purpleBlueLab instanceof LabColor; // true
+purpleBlueLab.toLabString(); // lab(30.998% 65.18 -90.771)
+purpleBlueLab.toLchString(); // lch(30.998% 111.749 305.681deg)
+
+```
+
+***
+
+#### `sRGBColor.prototype.toXyz(whitePoint)`
+
+Returns new XYZColor instance of the color representing the color in CIEXYZ Color space. Takes optional whitepoint argument, array of XYZ tristimulus values of CIE standard illuminant, either XYZColor.D50 or XYZColor.D65, if no value provided, default sRGBColor.whitePoint is used.
+
+```js
+
+import { color, sRGBColor, XYZColor } from '@snigos/color';
+
+const bikingRed = color('#77212E');
+const bikingRedXyz = purpleBlue.toXyz();
+
+bikingRedXyz instanceof sRGBColor; // false
+bikingRedXyz instanceof XYZColor; // true
+bikingRedXyz.x; // 0.1730064
+bikingRedXyz.y; // 0.0739667
+bikingRedXyz.z; // 0.6960912
+
+bikingRed.whitePoint; // [0.9505, 1, 1.089]
+bikingRedXyz.whitePoint; // [0.9505, 1, 1.089]
+
+```
+
+***
+
+#### `sRGBColor.prototype.toGrayscale()`
+
+Returns new grayscale color - shade of gray with the same intensity as initial color.
+
+```js
+
+import { color } from '@snigos/color';
+
+const green = color('green');
+const gray = green.toGrayscale();
+
+gray.saturation; // 0
+gray.toRgbString('relative'); // rgb(42.7% 42.7% 42.7%)
+
+```
+
+**NOTE:** grayscale conversion is not the same as desaturation!
+![Grayscale Demo](/__screenshots__/to-grayscale-demo.jpg)
+
+**NOTE:** because of the nature of Lab color space (separating lightness from chromacity), converting to LabColor before converting to grayscale will generally give you result with greater precision:
+
+```js
+
+import { color } from '@snigos/color';
+
+const green = color('green');
+const gray = green.toGrayscale();
+const grayLab = green.toLab().toGrayscale();
+
+green.luminance; // 0.1543731
+gray.luminance; // 0.1529262
+grayLab.luminance; // 0.1547457
+
+```
 
 ### `color()`
 
