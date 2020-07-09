@@ -146,6 +146,32 @@ mix('green', 'transparent', '100%').name; // "green"
   * [sRGBColor.prototype.toHslString()](#srgbcolorprototypetohslstring)
   * [sRGBColor.prototype.toHwbString()](#srgbcolorprototypetohwbstring)
 
+* [LabColor](#labcolor)
+  * [LabColor.lab()](#static-labcolorlab)
+  * [LabColor.labArray()](#static-labcolorlabarray)
+  * [LabColor.lch()](#static-labcolorlch)
+  * [LabColor.lchArray()](#static-labcolorlcharray)
+  * [LabColor.lightness](#labcolorlightness)
+  * [LabColor.a](#labcolora)
+  * [LabColor.b](#labcolorb)
+  * [LabColor.chroma](#labcolorchroma)
+  * [LabColor.hue](#labcolorhue)
+  * [LabColor.hrad](#labcolorhrad)
+  * [LabColor.hgrad](#labcolorhgrad)
+  * [LabColor.hturn](#labcolorhturn)
+  * [LabColor.alpha](#labcoloralpha)
+  * [LabColor.luminance](#labcolorluminance)
+  * [LabColor.mode](#labcolormode)
+  * [LabColor.whitepoint](#labcolorwhitepoint)
+  * [LabColor.prototype.copyWith()](#labcolorprototypecopywith)
+  * [LabColor.prototype.withAlpha()](#labcolorprototypewithalpha)
+  * [LabColor.prototype.invert()](#labcolorprototypeinvert)
+  * [LabColor.prototype.toRgb()](#labcolorprototypetorgb)
+  * [LabColor.prototype.toXyz()](#labcolorprototypetoxyz)
+  * [LabColor.prototype.toGrayscale()](#labcolorprototypetograyscale)
+  * [LabColor.prototype.toLabString()](#labcolorprototypetolabstring)
+  * [LabColor.prototype.toLchString()](#labcolorprototypetolchstring)
+
 
 ***
 
