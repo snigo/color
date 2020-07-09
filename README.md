@@ -107,6 +107,8 @@ mix('green', 'transparent', '100%').name; // "green"
 
 ### Contents:
 * [color()](#color-1)
+  * [String parsing options](#string-parsing-options)
+  * [Descriptor object parsing options](#descriptor-object-parsing-options)
 
 * [sRGBColor](#srgbcolor)
   * [sRGBColor.rgb()](#static-srgbcolorrgb)
@@ -220,6 +222,62 @@ color('lch(.8e2% 0b1101010 -12e-4turn)'); // ✅
 
 ```
 
+#### Descriptor object parsing options
+
+Parses color based on descriptor object provided. Needless to mention that in this case parsing speed will be a bit faster, so if you know values this approach is more preferable. Values of descriptor object can either strings or numbers (strings will slightly affect parsing speed). Alpha value in descriptor object is optional and defaults to 1.
+
+```js
+
+import { color } from 'snigos/color';
+
+// RGB color model
+color({
+  red: 134,
+  green: '14',
+  blue: '34%',
+  alpha: 0.95,
+}); // ✅
+
+// HSL color model
+color({
+  hue: '264deg',
+  saturation: 0.8,
+  lightness: 0.34,
+  alpha: '95%',
+}); // ✅
+
+// HWB color model
+color({
+  hue: 264,
+  whiteness: 0.8,
+  blackness: '34%',
+}); // ✅
+
+// XYZ color model
+color({
+  x: 0.34,
+  y: 0.4514,
+  z: 0.9,
+  alpha: 0.95,
+}); // ✅
+
+// Lab color model
+color({
+  lightness: '34%',
+  a: 80,
+  b: -34,
+  alpha: '95%',
+}); // ✅
+
+// LCH color model
+color({
+  lightness: 0.34,
+  chroma: 81,
+  hue: '-34grad',
+}); // ✅
+
+```
+
 ***
 
 ### `sRGBColor`
@@ -239,7 +297,7 @@ Takes color descriptor object as only parameter:
 | `hue`         | `number`   |                                    | Hue value in 0...360 range                     |
 | `saturation`  | `number`   |                                    | Saturation value in 0...1 range                |
 | `lightness`   | `number`   |                                    | Lightness in 0...1 range                       |
-| `alpha`       | `number`   | 1                                  | Alpha value in 0...255 range                   |
+| `alpha`       | `number`   | 1                                  | Alpha value in 0...1 range                     |
 | `whitePoint`  | `number[]` | XYZColor.D65 = [0.9505, 1, 1.089]  | Illuminant white point D65 or D50              |
 
 **NOTE**: In real life scenarios you almost never will have to use class constructor in this way and instead you are going to use one of the static methods of the class
@@ -826,7 +884,375 @@ eden.toHwbString(4); // hwb(144deg 69.4118% 14.902%)
 
 ***
 
+### `LabColor`
+
+Creates instanse of LabColor
+
+```js
+new LabColor(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**                    | **Notes**                                      |
+|---------------|------------|--------------------------------------|------------------------------------------------|
+| `lightness`   | `number`   |                                      | Lightness value in 0...1 range                 |
+| `a`           | `number`   |                                      | a value in -128...127 range                    |
+| `b`           | `number`   |                                      | b value in -128...127 range                    |
+| `hue`         | `number`   |                                      | Hue value in 0...360 range                     |
+| `chroma`      | `number`   |                                      | Chroma value in 0...260 range                  |
+| `alpha`       | `number`   | 1                                    | Alpha value in 0...1 range                     |
+| `whitePoint`  | `number[]` | XYZColor.D50 = [0.96422, 1, 0.82521] | Illuminant white point D65 or D50              |
+
+**NOTE**: In real life scenarios you almost never will have to use class constructor in this way and instead you are going to use one of the static methods of the class described below
+
+***
+
+#### `static LabColor.lab()`
+
+Creates instanse of LabColor with provided lightness, a and b values
+
+```js
+LabColor.lab(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**                  | **Notes**                                      |
+|---------------|------------|------------------------------------|------------------------------------------------|
+| `lightness`   | `number`   |                                    | Lightness value in 0...1 range                 |
+| `a`           | `number`   |                                    | a value in -128...127 range                    |
+| `b`           | `number`   |                                    | b value in -128...127 range                    |
+| `alpha`       | `number`   | 1                                  | Alpha value in 0...1 range                     |
+
+Returns LabColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static LabColor.labArray()`
+
+Creates instanse of LabColor with provided lightness, a, b and alpha values in array
+
+```js
+LabColor.labArray(array);
+```
+
+Takes array in [lightness, a, b, alpha] format. If no alpha value provided, it defaults to 1. Returns LabColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static LabColor.lch()`
+
+Creates instanse of LabColor with provided lightness, chroma and hue values
+
+```js
+LabColor.lch(descriptor);
+```
+
+Takes color descriptor object as only parameter:
+| **Property**  | **Type**   | **Default value**           | **Notes**                                        |
+|---------------|------------|-----------------------------|--------------------------------------------------|
+| `lightness`   | `number`   |                             | Lightness value in 0...1 range                   |
+| `chroma`      | `number`   |                             | Chroma value in 0...260 range                    |
+| `hue`         | `number`   |                             | Hue value in 0...360 range, representing degrees |
+| `alpha`       | `number`   | 1                           | Alpha value in 0...1 range                       |
+
+Returns LabColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `static LabColor.lchArray()`
+
+Creates instanse of LabColor with provided lightness, chroma, hue and alpha values in array
+
+```js
+LabColor.lchArray(array);
+```
+
+Takes array in [lightness, chroma, hue, alpha] format. If no alpha value provided, it defaults to 1. Returns LabColor instance or undefined if parameters are given incorrectly.
+
+***
+
+#### `LabColor.lightness`
+
+Returns the Lab color lightness value **as number**. Number in [0...1] range, where 0 is completely dark color (black) and 1 - fully light color (white).
+
+```js
+
+import { color } from 'snigos/color';
+
+const yellowish = color('lab(53% 8.88 54.53)');
+yellowish.lightness; // 0.53
+
+```
+
+**NOTE:** you might see most of the libraries storing Lab lightness value in 0...100 range, which is creating inconsistency with other values denoted as percentage and which is why we **don't** do it.
+
+***
+
+#### `LabColor.a`
+#### `LabColor.b`
+
+Return value of a and b components of the color. You can read more about Lab color and its axis [here](https://en.wikipedia.org/wiki/CIELAB_color_space).
+
+```js
+
+import { color } from 'snigos/color';
+
+const blueLab = color('blue').toLab();
+blueLab.a; // 68.2985992
+blueLab.b; // -112.0294101
+
+```
+
+***
 
 
+#### `LabColor.chroma`
 
+Returns the color chroma value of Lab color **as number**. Number in [0...260] range, on practice this number will rarely be higher than 132.
+
+```js
+
+import { color } from 'snigos/color';
+
+const grayLab = color('#777').toLab();
+grayLab.chroma; // 0.0000203
+grayLab.toLchString(); // lch(50.034% 0 16.916deg)
+
+const aquaLab = color('aqua').toLab();
+aquaLab.chroma; // 52.8284851
+aquaLab.toLchString(); // lch(90.666% 52.828 196.452deg)
+
+```
+
+***
+
+#### `LabColor.hue`
+#### `LabColor.hrad`
+#### `LabColor.hgrad`
+#### `LabColor.hturn`
+
+Returns the hue angle of the color on the Lab color wheel in degrees (`hue`), radians (`hrad`), gradients (`hgrad`) and turns or cycles (`hturn`) respectively. Note: Lab color wheel is quite different from RGB color wheel we mostly use, 0 degrees in Lab Color wheel approximately equal to 330-340 degrees on RGB color wheel depending on chroma value.
+
+```js
+
+import { color } from 'snigos/color';
+
+const red = color('red');
+const redLab = red.toLab();
+
+red.hue; // 0
+redLab.hue; // 40.8526349
+redLab.hrad; // 0.713013
+redLab.hgrad; // 45.3918166
+redLab.hturn; // 0.1134795
+
+```
+
+***
+
+#### `LabColor.alpha`
+
+Returns the value of the alpha-channel of the color. Number in [0...1] range, where 0 is completely transparent and 1 - has full opacity.
+
+```js
+
+import { LabColor } from 'snigos/color';
+
+const labColor = LabColor.lab({ lightness: 0.34, a: -23, b: 124 });
+labColor.alpha; // 1
+
+const semiTransparentLabColor = labColor.withAlpha(0.5);
+semiTransparentLabColor.alpha; // 0.5
+
+```
+
+***
+
+#### `LabColor.luminance`
+
+Returns relative luminance of the color of any point in a colorspace, normalized to 0 for darkest black and 1 for lightest white. Number in [0...1] range. Relative luminance is used for calculating color contrast.
+
+```js
+
+import { color, contrast } from 'snigos/color';
+
+const royalblueLab = color('#4169e1').toLab();
+royalblueLab.luminance; // 0.1586714
+
+const violet = color('violet');
+violet.luminance; // 0.4031848
+
+// Calculate contrast ratio
+(violet.luminance + 0.05) / (royalblueLab.luminance + 0.05); // 2.171762876944325
+contrast(royalblueLab, violet); // 2.17
+// NOTE: You can calculate contrast between sRGBColor and LabColor instances
+
+```
+
+***
+
+#### `LabColor.mode`
+
+Returns mode of the color, `0` is color is light and `1` if color is dark. Useful to determine font color for certain background. It is **guaranteed** that black color will always have sufficient contrast with any colors of mode "0" and otherwise white color will have sufficient contrast with colors of mode "1".
+
+```js
+
+import { color } from 'snigos/color';
+
+const bgColorLab = color('lab(5% 0 0)');
+const textColor = color(backgroundColor.mode ? 'white' : 'black');
+
+bgColorLab.mode; // 1
+textColor.mode; // 0
+textColor.name; // white
+
+```
+
+***
+
+#### `LabColor.whitePoint`
+
+Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZColor.D50` for LabColor
+
+***
+
+#### `LabColor.prototype.copyWith()`
+
+Copies color instance with provided parameters and returns new LabColor instance. Accepted parameters: `lightness`, `a`, `b`, `chroma`, `hue`, and `alpha`. Note: `a` and `b` parameters have priority over `chroma` and `hue`, meaning if you use a and hue value at the same time, the latter will be ignored.
+
+```js
+
+import { color } from '@snigos/color';
+
+const turmeric = color('#FE840E').toLab();
+const lightTurmeric = turmeric.copyWith({ lightness: turmeric.lightness + 0.1 });
+
+turmeric.toLabString(2); // lab(68.48% 43.3 73.12)
+lightTurmeric.toLabString(2); // lab(78.48% 73.12 73.12)
+
+```
+
+***
+
+#### `LabColor.prototype.withAlpha()`
+
+Copies color instance with provided alpha value. Shortcut method for `.copyWith({ alpha: value })`.
+
+```js
+
+import { color } from '@snigos/color';
+
+const lipsRedLab = color('#fa3c24').toLab();
+const lipsRedLab24 = lipsRedLab.withAlpha(0.24);
+
+lipsRedLab24.alpha; // 0.24
+lipsRedLab24.toLchString(); // lch(56.7% 91.955 39.804deg / 0.24)
+
+```
+
+***
+
+#### `LabColor.prototype.invert()`
+
+Inverts color. Returns new instance of LabColor representing inverted color, which in Lab color space means negation of `a` abd `b` components.
+
+```js
+
+import { color } from '@snigos/color';
+
+const pinkLab = color('pink').toLab();
+const invertedPinkLab = pinkLab.invert();
+
+pinkLab.toLabString(); // lab(83.788% 24.44 3.76)
+invertedPinkLab.toLabString(); // lab(83.788% -24.44 -3.76)
+
+```
+
+***
+
+#### `LabColor.prototype.toRgb()`
+
+Returns new sRGBColor instance of the color representing the color in sRGB Color space.
+
+```js
+
+import { sRGBColor, LabColor } from '@snigos/color';
+
+const purpleBlue = LabColor.lab({ lightness: 0.3, a: 65, b: -90 });
+const purpleBlueRgb = purpleBlue.toRgb();
+
+purpleBlueRgb instanceof LabColor; // false
+purpleBlueRgb instanceof sRGBColor; // true
+purpleBlueRgb.toHexString(); // #5900de
+purpleBlueRgb.toRgbString(); // rgb(89 0 222)
+
+```
+
+***
+
+#### `LabColor.prototype.toXyz(whitePoint)`
+
+Returns new XYZColor instance of the color representing the color in CIEXYZ Color space. Takes optional whitepoint argument, array of XYZ tristimulus values of CIE standard illuminant, either XYZColor.D50 or XYZColor.D65, if no value provided, default LabColor.whitePoint is used.
+
+```js
+
+import { color, LabColor, XYZColor } from '@snigos/color';
+
+const sweetCornLab = color('#F0EAD6').toLab();
+const sweetCornXyz = sweetCornLab.toXyz();
+
+sweetCornXyz instanceof LabColor; // false
+sweetCornXyz instanceof XYZColor; // true
+sweetCornXyz.x; // 0.7930204
+sweetCornXyz.y; // 0.8244821
+sweetCornXyz.z; // 0.5722771
+
+sweetCornLab.whitePoint; // [0.96422, 1, 0.82521]
+sweetCornXyz.whitePoint; // [0.96422, 1, 0.82521]
+
+```
+
+***
+
+#### `LabColor.prototype.toGrayscale()`
+
+Returns new grayscale color - shade of gray with the same lightness value as initial color.
+
+```js
+
+import { color } from '@snigos/color';
+
+const redLab = color('lch(45% 100 40)');
+const gray = redLab.toGrayscale();
+
+redLab.lightness; // 0.45
+gray.lightness; // 0.45
+gray.a; // 0
+gray.b; // 0
+gray.chroma; // 0
+
+```
+
+***
+
+#### `LabColor.prototype.toLabString(precision)`
+#### `LabColor.prototype.toLchString(precision)`
+
+Returns CSS string representation of color in Lab and LCH function notation accordingly compliable with CSS Color-4 spec and using given precision (defaults to 3).
+
+```js
+
+import { color } from '@snigos/color';
+
+const edenLab = color('#264E36').toLab();
+edenLab.toLabString(); // lab(29.704% -19.6 9.714)
+edenLab.toLchString(); // lch(29.704% 21.875 153.636deg)
+edenLab.toLabString(0); // lab(30% -20 10)
+edenLab.toLchString(0); // lch(30% 22 154deg)
+edenLab.toLabString(6); // lab(29.70438% -19.599741 9.714303)
+edenLab.toLchString(6); // lch(29.70438% 21.875044 153.636422deg)
+
+```
+
+**NOTE:** `-deg` suffix denoting degrees will always be added to values representing color hue
 

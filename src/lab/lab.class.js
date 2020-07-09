@@ -64,7 +64,7 @@ class LabColor {
       a: _a,
       b: _b,
       chroma: assumeChroma(Math.sqrt(_a ** 2 + _b ** 2)),
-      hue: assumeHue((Math.atan2(_b, _a) * 180) / Math.PI),
+      hue: assumeHue((Math.atan2(round(_b, 3), round(_a, 3)) * 180) / Math.PI),
       alpha: assumeAlpha(alpha),
     });
   }
@@ -109,8 +109,24 @@ class LabColor {
     });
   }
 
+  get hrad() {
+    return round(this.hue * (Math.PI / 180), 7);
+  }
+
+  get hgrad() {
+    return round(this.hue / 0.9, 7);
+  }
+
+  get hturn() {
+    return round(this.hue / 360, 7);
+  }
+
   get luminance() {
     return this.toXyz().y;
+  }
+
+  get mode() {
+    return +(this.luminance < 0.18);
   }
 
   toXyz(whitePoint = this.whitePoint) {
@@ -210,6 +226,15 @@ class LabColor {
     }
 
     return this;
+  }
+
+  invert() {
+    return LabColor.lab({
+      lightness: this.lightness,
+      a: -this.a,
+      b: -this.b,
+      alpha: this.alpha,
+    });
   }
 }
 
