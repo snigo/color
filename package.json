@@ -10,6 +10,7 @@
   "files": [
     "lib"
   ],
+  "types": "index.d.ts",
   "scripts": {
     "lint": "eslint src/**",
     "test": "jest",
