@@ -16,7 +16,7 @@ export function mix(base, c, a = 1) {
     red: _base.red + factor * (_c.red - _base.red),
     green: _base.green + factor * (_c.green - _base.green),
     blue: _base.blue + factor * (_c.blue - _base.blue),
-    alpha: Math.max(_base.alpha, round(factor, 7)),
+    alpha: _base.alpha * (1 + factor),
   });
 }
 
@@ -33,6 +33,6 @@ export function mixLab(base, c, a = 1) {
     lightness: _base.lightness + factor * (_c.lightness - _base.lightness),
     chroma: _base.chroma + factor * (_c.chroma - _base.chroma),
     hue: _base.hue + factor * (_c.hue - _base.hue),
-    alpha: Math.max(_base.alpha, round(factor, 7)),
+    alpha: _base.alpha * (1 + factor),
   });
 }

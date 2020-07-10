@@ -1694,3 +1694,61 @@ contrast.validate('white', '#ec1400')['wcag-aa-normal-text']; // false
 contrast('white', '#ec1400', 5); // 4.49886 (Less than 4.5)
 
 ```
+
+***
+
+### `mix()`
+
+Mixes two colors with optional alpha value applied to the second color. Returns new mixed Color instance. Uses technique of layering colors on top of each other also known as alpha blending.
+
+```js
+
+import { mix } from '@snigos/color';
+
+mix(base, layer, layerAlpha);
+
+```
+
+| **Parameter** | **Type**   | **Default value** | **Notes**                                      |
+|---------------|------------|-------------------|------------------------------------------------|
+| `base`        | `AnyColor` |                   | Base color to be mix                           |
+| `layer`       | `AnyColor` |                   | Layer on top of base color                     |
+| `layerAlpha`  | `number`   | 1                 | Optional alpha value for layer color           |
+
+If layer color will have semitransparent alpha channel and you additionally indicate layer alpha as third argument, the resulting alpha value would be a multiplication of those two:
+
+```js
+
+import { mix } from '@snigos/color';
+
+// Following will result in the same outcome
+mix('#fff', 'rgb(0 0 0 / 0.5)', 0.2).toRgbString(); // rgb(230 230 230)
+mix('#fff', 'rgb(0 0 0 / 0.1)').toRgbString(); // rgb(230 230 230)
+mix('#fff', 'rgb(0 0 0)', 0.1).toRgbString(); // rgb(230 230 230)
+
+```
+
+If both base and layer colors will have semitransparent alpha channels, resulting alpha channel will be calculated by formula `base.alpha * (1 + layer.alpha)`:
+
+```js
+
+import { mix } from '@snigos/color';
+
+const semiBlack = mix('rgb(0 0 0 / 0.5)', 'rgb(0 0 0 / 0.5)');
+semiBlack.alpha; // 0.75
+
+```
+
+More examples:
+
+```js
+
+import { mix } from '@snigos/color';
+
+mix('#FA9A85', '#00539C', 0.5).toHexString(); // #7d7791
+mix('#D69C2F', '#E8B5CE', 0.15).toHexString(); // #d9a047
+mix('blue', 'magenta', 0.75).toHexString(); // #bf00ff
+mix('#ff6f61', '#6b5b9599').toHexString(); // #a66380
+
+```
+![Mix function demo](/__screenshots__/mix-demo.jpg)
