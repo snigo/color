@@ -17,7 +17,7 @@
     "lint": "eslint src/**",
     "test": "jest",
     "build": "rollup --config",
-    "prepublish": "npm run lint && npm run test && npm run build"
+    "prepublish": "npm run test && npm run build"
   },
   "repository": {
     "type": "git",
