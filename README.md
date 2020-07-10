@@ -1650,20 +1650,20 @@ bgContrast('black'); // 4.2
 
 ```js
 
-contrast.min(base, anyColor);
+contrast.validate(base, anyColor);
 
 ```
 
-Returns [WCAG2.x](https://www.w3.org/WAI/standards-guidelines/wcag/) validation response based on the contrast between colors provided.
+Returns [WCAG2.x](https://www.w3.org/WAI/standards-guidelines/wcag/) validation response based on the contrast between colors provided. Each value in response is a boolean indicating success criteria for corresponding WCAG rule.
 
 Validation response object:
-| **Property**           | **Type**    | **Notes**                                                                     |
-|------------------------|-------------|-------------------------------------------------------------------------------|
-| `wcag-aa-large-text`   | `boolean`   | Boolean indicating success criteria for WCAG Level AA Large Text (`>= 3`)     |
-| `wcag-aa-normal-text`  | `boolean`   | Boolean indicating success criteria for WCAG Level AA Normal Text (`>= 4.5`)  |
-| `wcag-aa-ui`           | `boolean`   | Boolean indicating success criteria for WCAG Level AA UI Components (`>= 3`)  |
-| `wcag-aaa-large-text`  | `boolean`   | Boolean indicating success criteria for WCAG Level AAA Large Text (`>= 4.5`)  |
-| `wcag-aaa-normal-text` | `boolean`   | Boolean indicating success criteria for WCAG Level AAA Normal Text (`>= 7`)   |
+| **Property**           | **Type**    | **Notes**                             |
+|------------------------|-------------|---------------------------------------|
+| `wcag-aa-large-text`   | `boolean`   | WCAG Level AA Large Text (`>= 3`)     |
+| `wcag-aa-normal-text`  | `boolean`   | WCAG Level AA Normal Text (`>= 4.5`)  |
+| `wcag-aa-ui`           | `boolean`   | WCAG Level AA UI Components (`>= 3`)  |
+| `wcag-aaa-large-text`  | `boolean`   | WCAG Level AAA Large Text (`>= 4.5`)  |
+| `wcag-aaa-normal-text` | `boolean`   | WCAG Level AAA Normal Text (`>= 7`)   |
 
 ```js
 
