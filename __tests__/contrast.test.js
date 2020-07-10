@@ -23,7 +23,7 @@ test('contrast function should correctly calculate contrast', () => {
   expect(contrast('#fff', '#000')).toBe(21);
   expect(contrast('#000', '#fff')).toBe(21);
   expect(contrast('yellow', 'pink', 4)).toBe(1.4322);
-  expect(contrast('yellow', 'pink', 7)).toBe(1.4321998);
+  expect(contrast('yellow', 'pink', 7)).toBe(1.4322007);
   expect(contrast('blue')('lime')).toBe(6.26);
   expect(contrast('blue')('lime', 3)).toBe(6.263);
   expect(contrast()('green')).toBe(5.14);
@@ -33,14 +33,16 @@ test('contrast function should correctly calculate contrast', () => {
 test('contrast.find method should find color by hue, saturation and target contrast', () => {
   const baseContrast = contrast('aliceblue');
   const target = 4.5;
-  const c = baseContrast.find({
+  const response = baseContrast.find({
     hue: 294,
     saturation: 0.45,
     targetContrast: target,
   });
-  expect(c.hue).toBe(294);
-  expect(c.saturation).toBe(0.45);
-  expect(baseContrast(c)).toBeCloseTo(target);
+  expect(Array.isArray(response)).toBe(true);
+  expect(response).toHaveLength(1);
+  expect(response[0].hue).toBe(294);
+  expect(response[0].saturation).toBe(0.45);
+  expect(baseContrast(response[0])).toBeCloseTo(target, 1);
 });
 
 test('contrast.min method should find color with minimum contrast value', () => {
