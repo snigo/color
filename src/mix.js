@@ -1,4 +1,4 @@
-import { instanceOfColor, round, assumePercent } from './utils';
+import { instanceOfColor, assumePercent } from './utils';
 import { color } from './color';
 import sRGBColor from './srgb/srgb.class';
 import LabColor from './lab/lab.class';

@@ -3,7 +3,7 @@
 Greatly missing color functions and types for JavaScript.
 - Supports three color spaces: *sRGB*, *CIELab* and *CIEXYZ* with precise conversion between them.
 - Zero dependencies
-- Parser doesn’t rely on browser to parse color strings and could be used in any environment.
+- Parser doesn’t rely on browsers to parse color strings and could be used in any environment.
 - Understands all CSS colors and many more cool features!
 
 ## Usage
@@ -36,7 +36,7 @@ bgContrast.validate(badPrimaryColor);
   wcag-aaa-large-text: false,
 } */
 
-const goodPrimaryColor = bgContrast.find({
+const [goodPrimaryColor] = bgContrast.find({
   hue: 134,
   saturation: 0.8,
   targetContrast: 4.5,
@@ -45,7 +45,7 @@ const goodPrimaryColor = bgContrast.find({
 bgContrast(goodPrimaryColor); // 4.54
 goodPrimaryColor.toHslString(); // hsl(134deg 80% 29.7%)
 goodPrimaryColor.toHexString(); // #0f882b
-goodPrimaryColor.toLab().toLchString(); // lch(49.377% 60.817 140.04deg)
+goodPrimaryColor.toLab().toLchString(); // lch(49.378% 60.817 140.041deg)
 goodPrimaryColor.copyWith({ lightness: goodPrimaryColor.lightness + 0.05 });
 /*
   sRGBColor {
@@ -63,7 +63,7 @@ goodPrimaryColor.copyWith({ lightness: goodPrimaryColor.lightness + 0.05 });
 
 ## Motivation
 
-Whether you like it or not, but merging between CSS and JavaScript and using JavaScript for styling in non-CSS environments, like mobile development, is here and most likely will stay for quite a while. The need of JavaScript representations of CSS units is inevitable, especially in a color as things there are about to change with introduction of CIELab color space in modern browsers that is pretty much around the corner. You can read [this article](https://lea.verou.me/2020/04/lch-colors-in-css-what-why-and-how/) by [Lea Verou](https://twitter.com/leaverou) explaining well, why Lab colors are pretty cool.
+Whether you like it or not, but merging between CSS and JavaScript and using JavaScript for styling in non-CSS environments, like mobile development, is here and most likely will stay for quite a while. The need of JavaScript representations of CSS units is inevitable, especially in a color as things there are about to change with introduction of CIELab color space in modern browsers that is pretty much around the corner. You can read [this article](https://lea.verou.me/2020/04/lch-colors-in-css-what-why-and-how/) by [Lea Verou](https://twitter.com/leaverou) explaining why Lab colors are pretty cool.
 
 Color package consists of several perfectly tree-shakeable modules:
 - color function: color parcer that converts strings like this: #da34e1 into JavaScript object, an sRGBColor instance in this case
@@ -79,25 +79,26 @@ You can only import and use functionality you need.
 
 > Why 3 different classes to store color?
 
-Because underlining color spaces are very different, especially sRGB and Lab colors. They literally mathematically incomparible, that's why we need auxilary class XYZ for conversions between them. They also share same parameters like hue and lightness, that are completely different things and storing it all in one instance would be a nightmare.
+Because underlining color spaces are very different, especially sRGB and Lab colors. They are literally mathematically incompatible, that's why we need auxiliary class XYZ for conversions between them. They also share the same parameters like hue and lightness, that are completely different things and storing it all in one instance would be a nightmare.
 
 > Where's CMYK?
 
-First of all CMYK colors are huge thing by itself and to be done property requires separate library and secondly its subtractive color nature would not allow some core functionality of this library.
+First of all CMYK color space is a huge thing by itself and to be done property requires separate library and secondly its subtractive color nature would not allow some core functionality of this library.
 
 > Are color instances immutable?
 
-Yes! Any modification of instance will always produce new instance and all properties of color instances are read-only.
+Yes! Any modification of instance will always produce new instances and all properties of color instances are read-only.
 
 > Does this library comply with CSS Color spec?
 
-This library partually comply with CSS Color spec, it uses the same Bradford adaptation method with default D65 white point for sRGB and D50 white point for Lab (also used by Adobe products), it parses all the possible color notations defined in the spec including CSS named colors, but it also has few important differences:
+This library partially comply with CSS Color spec, it uses the same Bradford adaptation method with default D65 white point for sRGB and D50 white point for Lab (also used by Adobe products), it parses all the possible color notations defined in the spec including CSS named colors, but it also has few important differences:
 1. contrast function in this library doesn't floor (truncate) the result, but mathematically rounds it, so contrast value `4.4954` will be correctly shown as `4.5`, however `contrast.validate` function will not validate such contrast as valid according to WCAG2.0 requirements.
 2. parser of this library additionally **allows** mixed absolute and relative values like so: `rgb(50% 123 25% / .5)`, which is not valid syntax according to CSS Color spec.
-3. `mix` and `mixLab` functions of the library work different from `mix-color` CSS function with semi-transparent colors. Our approach is layering colors on top of each other, also known as alpha blending and their approach is linear interpolation (aka lerp) between two colors:
+3. `mix` and `mixLab` functions of the library work differently from `mix-color` CSS function with semi-transparent colors. Our approach is layering colors on top of each other, also known as alpha blending and their approach is linear interpolation (aka lerp) between two colors:
+
 ```js
 /**
- * If you put tansparent color on top of green the result will still be green
+ * If you put transparent color on top of green the result will still be green
  * In CSS function mix-color() the result with same parameters will give you "transparent" 
  */
 mix('green', 'transparent', '100%').name; // "green"
@@ -132,7 +133,7 @@ mix('green', 'transparent', '100%').name; // "green"
   * [sRGBColor.alpha](#srgbcoloralpha)
   * [sRGBColor.luminance](#srgbcolorluminance)
   * [sRGBColor.mode](#srgbcolormode)
-  * [sRGBColor.whitepoint](#srgbcolorwhitepoint)
+  * [sRGBColor.whitePoint](#srgbcolorwhitepoint)
   * [sRGBColor.prototype.copyWith()](#srgbcolorprototypecopywith)
   * [sRGBColor.prototype.withAlpha()](#srgbcolorprototypewithalpha)
   * [sRGBColor.prototype.invert()](#srgbcolorprototypeinvert)
@@ -162,7 +163,7 @@ mix('green', 'transparent', '100%').name; // "green"
   * [LabColor.alpha](#labcoloralpha)
   * [LabColor.luminance](#labcolorluminance)
   * [LabColor.mode](#labcolormode)
-  * [LabColor.whitepoint](#labcolorwhitepoint)
+  * [LabColor.whitePoint](#labcolorwhitepoint)
   * [LabColor.prototype.copyWith()](#labcolorprototypecopywith)
   * [LabColor.prototype.withAlpha()](#labcolorprototypewithalpha)
   * [LabColor.prototype.invert()](#labcolorprototypeinvert)
@@ -181,7 +182,7 @@ mix('green', 'transparent', '100%').name; // "green"
   * [XYZColor.alpha](#xyzcoloralpha)
   * [XYZColor.luminance](#xyzcolorluminance)
   * [XYZColor.mode](#xyzcolormode)
-  * [XYZColor.whitepoint](#xyzcolorwhitepoint)
+  * [XYZColor.whitePoint](#xyzcolorwhitepoint)
   * [XYZColor.prototype.adapt()](#xyzcolorprototypeadapt)
   * [XYZColor.prototype.toRgb()](#xyzcolorprototypetorgb)
   * [XYZColor.prototype.toLab()](#xyzcolorprototypetolab)
@@ -193,12 +194,16 @@ mix('green', 'transparent', '100%').name; // "green"
   * [contrast.max()](#contrastmax)
   * [contrast.validate()](#contrastvalidate)
 
+* [mix()](#mix)
+
+* [mixLab()](#mixlab)
+
 
 ***
 
 ### `color()`
 
-Parses color from variety of string formats as well as object descriptors. Returns either sRGBColor, LabColor or XYZColor instance depending on the input, or `undefined` if parsing attempt is unsuccessful.
+Parses color from a variety of string formats as well as object descriptors. Returns either sRGBColor, LabColor or XYZColor instance depending on the input, or `undefined` if parsing is unsuccessful.
 
 ```js
 
@@ -244,7 +249,7 @@ color('hslA( 2.6rad 100% 50% )'); // ✅
 color('hsl(214grad, 13%, 76%, 0.34)'); // ✅
 
 /**
- * !!NOTE!! All notations below only support newer whitespace notation
+ * NOTE!! All notations below only support newer whitespace notation
  * according to CSS Color-4 spec
  */
 
@@ -271,7 +276,7 @@ color('lch(.8e2% 0b1101010 -12e-4turn)'); // ✅
 
 #### Descriptor object parsing options
 
-Parses color based on descriptor object provided. Needless to mention that in this case parsing speed will be a bit faster, so if you know values this approach is more preferable. Values of descriptor object can either strings or numbers (strings will slightly affect parsing speed). Alpha value in descriptor object is optional and defaults to 1.
+Parses color based on the descriptor object provided. Needless to mention that in this case parsing speed will be a bit faster, so if you know values this approach is more preferable. Values of the descriptor object can either strings or numbers (strings will slightly affect parsing speed). Alpha value in the descriptor object is optional and defaults to 1.
 
 ```js
 
@@ -329,37 +334,37 @@ color({
 
 ### `sRGBColor`
 
-Creates instanse of sRGBColor
+Creates instance of sRGBColor
 
 ```js
 new sRGBColor(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
-| **Property**  | **Type**   | **Default value**                  | **Notes**                                      |
-|---------------|------------|------------------------------------|------------------------------------------------|
-| `red`         | `number`   |                                    | Red value in 0...255 range                     |
-| `green`       | `number`   |                                    | Green value in 0...255 range                   |
-| `blue`        | `number`   |                                    | Blue value in 0...255 range                    |
-| `hue`         | `number`   |                                    | Hue value in 0...360 range                     |
-| `saturation`  | `number`   |                                    | Saturation value in 0...1 range                |
-| `lightness`   | `number`   |                                    | Lightness in 0...1 range                       |
-| `alpha`       | `number`   | 1                                  | Alpha value in 0...1 range                     |
-| `whitePoint`  | `number[]` | XYZColor.D65 = [0.9505, 1, 1.089]  | Illuminant white point D65 or D50              |
+Takes color descriptor object as the only parameter:
+| **Property**  | **Type**   | **Default value**                     | **Notes**                                      |
+|---------------|------------|---------------------------------------|------------------------------------------------|
+| `red`         | `number`   |                                       | Red value in 0...255 range                     |
+| `green`       | `number`   |                                       | Green value in 0...255 range                   |
+| `blue`        | `number`   |                                       | Blue value in 0...255 range                    |
+| `hue`         | `number`   |                                       | Hue value in 0...360 range                     |
+| `saturation`  | `number`   |                                       | Saturation value in 0...1 range                |
+| `lightness`   | `number`   |                                       | Lightness in 0...1 range                       |
+| `alpha`       | `number`   | 1                                     | Alpha value in 0...1 range                     |
+| `whitePoint`  | `number[]` | XYZColor.D65 = [0.95047, 1, 1.08883]  | Illuminant white point D65 or D50              |
 
-**NOTE**: In real life scenarios you almost never will have to use class constructor in this way and instead you are going to use one of the static methods of the class
+**NOTE**: In real life scenario you almost never will have to use class constructor in this way and instead you are going to use one of the static methods of the class described below.
 
 ***
 
 #### `static sRGBColor.rgb()`
 
-Creates instanse of sRGBColor with provided red, green and blue values
+Creates instance of sRGBColor with provided red, green and blue values
 
 ```js
 sRGBColor.rgb(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**                  | **Notes**                                      |
 |---------------|------------|------------------------------------|------------------------------------------------|
 | `red`         | `number`   |                                    | Red value in 0...255 range                     |
@@ -373,25 +378,25 @@ Returns sRGBColor instance or undefined if parameters are given incorrectly.
 
 #### `static sRGBColor.rgbArray()`
 
-Creates instanse of sRGBColor with provided red, green, blue and alpha values in array
+Creates instance of sRGBColor with provided red, green, blue and alpha values in array
 
 ```js
 sRGBColor.rgbArray(rgbaArray);
 ```
 
-Takes array in [red, green, blue, alpha] format. If no alpha value provided, it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
+Takes array in [red, green, blue, alpha] format. If no alpha value provided it defaults to 1. Returns sRGBColor instance or undefined if parameters are given incorrectly.
 
 ***
 
 #### `static sRGBColor.hsl()`
 
-Creates instanse of sRGBColor with provided hue, saturation and lightness values
+Creates instance of sRGBColor with provided hue, saturation and lightness values
 
 ```js
 sRGBColor.hsl(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**           | **Notes**                                        |
 |---------------|------------|-----------------------------|--------------------------------------------------|
 | `hue`         | `number`   |                             | Hue value in 0...360 range, representing degrees |
@@ -405,7 +410,7 @@ Returns sRGBColor instance or undefined if parameters are given incorrectly.
 
 #### `static sRGBColor.hslArray()`
 
-Creates instanse of sRGBColor with provided hue, saturation, lightness and alpha values in array
+Creates instance of sRGBColor with provided hue, saturation, lightness and alpha values in array
 
 ```js
 sRGBColor.hslArray(hslaArray);
@@ -417,13 +422,13 @@ Takes array in [hue, saturation, lightness, alpha] format. If no alpha value pro
 
 #### `static sRGBColor.hwb()`
 
-Creates instanse of sRGBColor with provided hue, whiteness and blackness values
+Creates instance of sRGBColor with provided hue, whiteness and blackness values
 
 ```js
 sRGBColor.hwb(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**           | **Notes**                                        |
 |---------------|------------|-----------------------------|--------------------------------------------------|
 | `hue`         | `number`   |                             | Hue value in 0...360 range, representing degrees |
@@ -437,7 +442,7 @@ Returns sRGBColor instance or undefined if parameters are given incorrectly.
 
 #### `static sRGBColor.hwbArray()`
 
-Creates instanse of sRGBColor with provided hue, whiteness, blackness and alpha values in array
+Creates instance of sRGBColor with provided hue, whiteness, blackness and alpha values in array
 
 ```js
 sRGBColor.hwbArray(hwbaArray);
@@ -449,13 +454,13 @@ Takes array in [hue, whiteness, blackness, alpha] format. If no alpha value prov
 
 #### `static sRGBColor.lin()`
 
-Creates instanse of sRGBColor with provided linear values of red, green, blue components through the process of gamma decoding (applying a gamma of 1/2.2 to the values). 
+Creates instance of sRGBColor with provided linear values of red, green, blue components through the process of gamma decoding (applying a gamma of 1/2.2 to the values). 
 
 ```js
 sRGBColor.lin(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**           | **Notes**                                      |
 |---------------|------------|-----------------------------|------------------------------------------------|
 | `red`         | `number`   |                             | Red value in 0...1 range                       |
@@ -469,7 +474,7 @@ Returns sRGBColor instance or undefined if parameters are given incorrectly.
 
 #### `static sRGBColor.linArray()`
 
-Creates instanse of sRGBColor with provided linear values of red, green, blue components and alpha values in array
+Creates instance of sRGBColor with provided linear values of red, green, blue components and alpha values in array
 
 ```js
 sRGBColor.linArray(linaArray);
@@ -526,7 +531,7 @@ royalblue.blue; // 225
 #### `sRGBColor.hgrad`
 #### `sRGBColor.hturn`
 
-Returns the hue angle of the color on the color wheel in degrees (`hue`), radians (`hrad`), gradients (`hgrad`) and turns or cycles (`hturn`) respectively. 0 degrees is referred to red color.
+Return the hue angle of the color on the color wheel in degrees (`hue`), radians (`hrad`), gradients (`hgrad`) and turns or cycles (`hturn`) respectively. 0 degrees is referred to red color.
 
 ```js
 
@@ -552,7 +557,7 @@ darkmagenta.hturn; // 0.875
 
 #### `sRGBColor.saturation`
 
-Returns the color saturation value of HSL representation **as number**. Number in [0...1] range, where 0 is completely desaturated color and 1 - fully saturated color.
+Returns the color saturation value of HSL model **as number**. Number in [0...1] range, where 0 is completely desaturated color and 1 - fully saturated color.
 
 ```js
 
@@ -571,7 +576,7 @@ slateGray.saturation; // 0.13
 
 #### `sRGBColor.lightness`
 
-Returns the color lightness value of HSL representation **as number**. Number in [0...1] range, where 0 is completely dark color (black) and 1 - fully light color (white).
+Returns the color lightness value of HSL model **as number**. Number in [0...1] range, where 0 is completely dark color (black) and 1 - fully light color (white).
 
 ```js
 
@@ -591,7 +596,7 @@ textColor.lightness; // 0.17
 
 #### `sRGBColor.alpha`
 
-Returns the value of the alpha-channel of the color. Number in [0...1] range, where 0 is completely transparent and 1 - has full opacity.
+Returns the value of the alpha channel of the color. Number in [0...1] range, where 0 is completely transparent and 1 - has full opacity.
 
 ```js
 
@@ -612,20 +617,20 @@ transparent.alpha; // 0
 
 #### `sRGBColor.luminance`
 
-Returns relative luminance of the color of any point in a colorspace, normalized to 0 for darkest black and 1 for lightest white. Number in [0...1] range. Relative luminance is used for calculating color contrast.
+Returns relative luminance of the color of any point in the color space, normalized to 0 for darkest black and 1 for lightest white. Number in [0...1] range. Relative luminance is used for calculating color contrast.
 
 ```js
 
 import { color, contrast } from 'snigos/color';
 
 const royalblue = color('#4169e1');
-royalblue.luminance; // 0.1666104
+royalblue.luminance; // 0.16661
 
 const violet = color('violet');
-violet.luminance; // 0.4031848
+violet.luminance; // 0.403185
 
 // Calculate contrast ratio
-(violet.luminance + 0.05) / (royalblue.luminance + 0.05); // 2.0921654731259443
+(violet.luminance + 0.05) / (royalblue.luminance + 0.05); // 2.092170259914131
 contrast(royalblue, violet); // 2.09
 
 ```
@@ -678,7 +683,7 @@ Even though color warmth is hugely subjective, you can can presume color groups 
 
 #### `sRGBColor.mode`
 
-Returns mode of the color, `0` is color is light and `1` if color is dark. Useful to determine font color for certain background. It is **guaranteed** that 'black' color will always have sufficient contrast with any colors of mode "0" and otherwise 'white' color will have sufficient contrast with colors of mode "1".
+Returns mode of the color, `0` if color is light and `1` if color is dark. Useful to determine font color for certain backgrounds. It is **guaranteed** that `black` color will always have sufficient contrast with any colors of mode `0` and otherwise `white` color will have sufficient contrast with colors of mode `1`.
 
 ```js
 
@@ -696,7 +701,17 @@ textColor.mode; // 0
 
 #### `sRGBColor.whitePoint`
 
-Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZColor.D65`: https://en.wikipedia.org/wiki/Illuminant_D65 for sRGBColor
+Returns array of XYZ tristimulus values of CIE standard illuminant of current color. Defaults to `XYZColor.D65`: https://en.wikipedia.org/wiki/Illuminant_D65 for sRGBColor. In simple words, it is X, Y and Z values for color `white`:
+
+```js
+
+import { color, sRGBColor, XYZColor } from '@snigos/color';
+
+color('white').whitePoint; // [0.95047, 1, 1.08883]
+color('white').toXyz().toXyzArray(); // [0.95047, 1, 1.08883]
+XYZColor.D65; // [0.95047, 1, 1.08883]
+
+```
 
 ***
 
@@ -823,8 +838,8 @@ bikingRedXyz.x; // 0.1730064
 bikingRedXyz.y; // 0.0739667
 bikingRedXyz.z; // 0.6960912
 
-bikingRed.whitePoint; // [0.9505, 1, 1.089]
-bikingRedXyz.whitePoint; // [0.9505, 1, 1.089]
+bikingRed.whitePoint; // [0.95047, 1, 1.08883]
+bikingRedXyz.whitePoint; // [0.95047, 1, 1.08883]
 
 ```
 
@@ -933,13 +948,13 @@ eden.toHwbString(4); // hwb(144deg 69.4118% 14.902%)
 
 ### `LabColor`
 
-Creates instanse of LabColor
+Creates instance of LabColor
 
 ```js
 new LabColor(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**                    | **Notes**                                      |
 |---------------|------------|--------------------------------------|------------------------------------------------|
 | `lightness`   | `number`   |                                      | Lightness value in 0...1 range                 |
@@ -956,13 +971,13 @@ Takes color descriptor object as only parameter:
 
 #### `static LabColor.lab()`
 
-Creates instanse of LabColor with provided lightness, a and b values
+Creates instance of LabColor with provided lightness, a and b values
 
 ```js
 LabColor.lab(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**                  | **Notes**                                      |
 |---------------|------------|------------------------------------|------------------------------------------------|
 | `lightness`   | `number`   |                                    | Lightness value in 0...1 range                 |
@@ -976,7 +991,7 @@ Returns LabColor instance or undefined if parameters are given incorrectly.
 
 #### `static LabColor.labArray()`
 
-Creates instanse of LabColor with provided lightness, a, b and alpha values in array
+Creates instance of LabColor with provided lightness, a, b and alpha values in array
 
 ```js
 LabColor.labArray(array);
@@ -988,13 +1003,13 @@ Takes array in [lightness, a, b, alpha] format. If no alpha value provided, it d
 
 #### `static LabColor.lch()`
 
-Creates instanse of LabColor with provided lightness, chroma and hue values
+Creates instance of LabColor with provided lightness, chroma and hue values
 
 ```js
 LabColor.lch(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**           | **Notes**                                        |
 |---------------|------------|-----------------------------|--------------------------------------------------|
 | `lightness`   | `number`   |                             | Lightness value in 0...1 range                   |
@@ -1008,7 +1023,7 @@ Returns LabColor instance or undefined if parameters are given incorrectly.
 
 #### `static LabColor.lchArray()`
 
-Creates instanse of LabColor with provided lightness, chroma, hue and alpha values in array
+Creates instance of LabColor with provided lightness, chroma, hue and alpha values in array
 
 ```js
 LabColor.lchArray(array);
@@ -1307,20 +1322,20 @@ edenLab.toLchString(6); // lch(29.70438% 21.875044 153.636422deg)
 
 ### `XYZColor`
 
-Creates instanse of XYZColor
+Creates instance of XYZColor
 
 ```js
 new XYZColor(descriptor);
 ```
 
-Takes color descriptor object as only parameter:
+Takes color descriptor object as the only parameter:
 | **Property**  | **Type**   | **Default value**                    | **Notes**                                      |
 |---------------|------------|--------------------------------------|------------------------------------------------|
 | `x`           | `number`   |                                      | x value in 0...1 range                         |
 | `y`           | `number`   |                                      | y value in 0...1 range                         |
 | `z`           | `number`   |                                      | z value in 0...1 range                         |
 | `alpha`       | `number`   | 1                                    | Alpha value in 0...1 range                     |
-| `whitePoint`  | `number[]` | XYZColor.D65 = [0.9505, 1, 1.089]    | Illuminant white point D65 or D50              |
+| `whitePoint`  | `number[]` | XYZColor.D65 = [0.95047, 1, 1.08883]    | Illuminant white point D65 or D50              |
 
 ***
 
@@ -1338,7 +1353,7 @@ const xyzD50 = new XYZColor({ x: 0.79, y: 0.825, z: 0.57, whitePoint: XYZColor.D
 
 #### `static XYZColor.D65`
 
-Returns array of XYZ tristimulus values of CIE standard illuminant D65: [0.9505, 1, 1.089]
+Returns array of XYZ tristimulus values of CIE standard illuminant D65: [0.95047, 1, 1.08883]
 
 ```js
 
@@ -1487,7 +1502,7 @@ sweetCornLab instanceof XYZColor; // false
 sweetCornLab instanceof LabColor; // true
 sweetCornLab.toLchString(2); // lch(92.77% 10.52 92.1deg)
 
-sweetCornXyz.whitePoint; // [0.9505, 1, 1.089] D65 inherited from sRGB
+sweetCornXyz.whitePoint; // [0.95047, 1, 1.08883] D65 inherited from sRGB
 sweetCornLab.whitePoint; // [0.96422, 1, 0.82521] D50 as default Lab Color
 
 ```
@@ -1752,3 +1767,60 @@ mix('#ff6f61', '#6b5b9599').toHexString(); // #a66380
 
 ```
 ![Mix function demo](/__screenshots__/mix-demo.jpg)
+
+***
+
+### `mixLab()`
+
+Mixes two colors with optional alpha value applied to the second color in Lab color space. Returns new LabColor instance. Uses technique of layering colors on top of each other also known as alpha blending. This approach of mixing is more preferable by many as resulting color lightness will not increse and stay consistent with colors you mix, contrary to sRGB color mixing where resulting color will **always** have increased lightness due to additive nature of the color space.
+
+```js
+
+import { mixLab } from '@snigos/color';
+
+mixLab(base, layer, layerAlpha);
+
+```
+
+| **Parameter** | **Type**   | **Default value** | **Notes**                                      |
+|---------------|------------|-------------------|------------------------------------------------|
+| `base`        | `AnyColor` |                   | Base color to be mix                           |
+| `layer`       | `AnyColor` |                   | Layer on top of base color                     |
+| `layerAlpha`  | `number`   | 1                 | Optional alpha value for layer color           |
+
+If layer color will have semitransparent alpha channel and you additionally indicate layer alpha as third argument, the resulting alpha value would be a multiplication of those two:
+
+```js
+
+import { mixLab } from '@snigos/color';
+
+// Following will result in the same outcome
+mixLab('#fff', 'rgb(0 0 0 / 0.5)', 0.2).toRgb().toRgbString(); // rgb(226 226 226)
+mixLab('#fff', 'rgb(0 0 0 / 0.1)').toRgb().toRgbString(); // rgb(226 226 226)
+mixLab('#fff', 'rgb(0 0 0)', 0.1).toRgb().toRgbString(); // rgb(226 226 226)
+
+```
+
+If both base and layer colors will have semitransparent alpha channels, resulting alpha channel will be calculated by formula `base.alpha * (1 + layer.alpha)`:
+
+```js
+
+import { mixLab } from '@snigos/color';
+
+const semiBlack = mixLab('rgb(0 0 0 / 0.5)', 'rgb(0 0 0 / 0.5)');
+semiBlack.alpha; // 0.75
+
+```
+
+Note the difference between `mix()` and `mixLab()` functions:
+
+```js
+
+import { mix, mixLab } from '@snigos/color';
+
+mix('blue', 'green', 0.5).toHexString(); // #004080
+mixLab('blue', 'green', 0.5).toRgb().toHexString(); // #0075bd
+
+```
+![MixLab function demo](/__screenshots__/mixlab-demo.jpg)
+

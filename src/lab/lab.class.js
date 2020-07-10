@@ -5,12 +5,11 @@ import {
   assumeChroma,
   assumeHue,
   assumePercent,
-  clamp,
   defined,
   round,
 } from '../utils';
 
-import { D50, D65, ONE_RANGE } from '../constants';
+import { D50, D65 } from '../constants';
 import XYZColor from '../xyz/xyz.class';
 
 class LabColor {
@@ -143,9 +142,9 @@ class LabColor {
     ].map((V, i) => round(V * this.whitePoint[i], 7));
 
     return new XYZColor({
-      x: clamp(ONE_RANGE, x),
-      y: clamp(ONE_RANGE, y),
-      z: clamp(ONE_RANGE, z),
+      x,
+      y,
+      z,
       alpha: this.alpha,
       whitePoint: this.whitePoint,
     }).adapt(whitePoint);

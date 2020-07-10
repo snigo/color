@@ -23,7 +23,7 @@ export const D50_D65_MATRIX = [
 ];
 
 export const D50 = [0.96422, 1, 0.82521];
-export const D65 = [0.9505, 1, 1.089];
+export const D65 = [0.95047, 1, 1.08883];
 
 export const OCT_RANGE = [0, 255];
 export const DEG_RANGE = [0, 359];

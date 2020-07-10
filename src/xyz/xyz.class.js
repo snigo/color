@@ -1,10 +1,15 @@
 /* eslint-disable import/no-cycle */
-import { equal, applyMatrix } from '../utils';
+import {
+  applyMatrix,
+  assumeAlpha,
+  equal,
+  round,
+} from '../utils';
 import {
   D50,
-  D65_D50_MATRIX,
   D50_D65_MATRIX,
   D65,
+  D65_D50_MATRIX,
   XYZ_RGB_MATRIX,
 } from '../constants';
 import LabColor from '../lab/lab.class';
@@ -20,16 +25,16 @@ class XYZColor {
   }) {
     Object.defineProperties(this, {
       x: {
-        value: x,
+        value: round(x, 6),
       },
       y: {
-        value: y,
+        value: round(y, 6),
       },
       z: {
-        value: z,
+        value: round(z, 6),
       },
       alpha: {
-        value: alpha,
+        value: assumeAlpha(alpha),
       },
       whitePoint: {
         value: whitePoint,

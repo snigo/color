@@ -5,7 +5,6 @@ import {
   D50,
   D65,
   OCT_RANGE,
-  ONE_RANGE,
   RGB_XYZ_MATRIX,
 } from '../constants';
 
@@ -15,7 +14,6 @@ import {
   assumeHue,
   assumeOctet,
   assumePercent,
-  clamp,
   getFraction,
   getHslSaturation,
   modulo,
@@ -289,11 +287,11 @@ class sRGBColor {
   }
 
   toXyz(whitePoint = this.whitePoint) {
-    const [x, y, z] = applyMatrix(this.toLin(), RGB_XYZ_MATRIX).map((v) => round(v, 7));
+    const [x, y, z] = applyMatrix(this.toLin(), RGB_XYZ_MATRIX);
     return new XYZColor({
-      x: clamp(ONE_RANGE, x),
-      y: clamp(ONE_RANGE, y),
-      z: clamp(ONE_RANGE, z),
+      x,
+      y,
+      z,
       alpha: this.alpha,
       whitePoint: this.whitePoint,
     }).adapt(whitePoint);
