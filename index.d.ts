@@ -187,13 +187,15 @@ interface WCAGResponse {
   'wcag-aaa-large-text': boolean;
 }
 
-export function contrast(base: AnyColor, compareColor?: AnyColor, precision?: number): number | {
-  (compareColor: AnyColor, precision?: number): number;
-  find(descriptor: ContrastColorDescriptor): sRGBColor[];
-  min(array: AnyColor[]): sRGBColor;
-  max(array: AnyColor[]): sRGBColor;
-  validate(testColor: AnyColor): WCAGResponse;
+type contrastCurry = (compareColor: AnyColor, precision?: number) => number;
+namespace contrastCurry {
+  export function find(descriptor: ContrastColorDescriptor): sRGBColor[];
+  export function min(array: AnyColor[]): sRGBColor;
+  export function max(array: AnyColor[]): sRGBColor;
+  export function validate(testColor: AnyColor): WCAGResponse;
 }
+export function contrast(base: AnyColor, compareColor?: AnyColor, precision?: number): number;
+export function contrast(base: AnyColor): contrastCurry;
 export namespace contrast {
   export function find(base: AnyColor, descriptor: ContrastColorDescriptor): sRGBColor[];
   export function min(base: AnyColor, array: AnyColor[]): sRGBColor;
