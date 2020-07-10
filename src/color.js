@@ -96,6 +96,5 @@ export {
   XYZColor,
 };
 
-export { default as gray } from './gray';
 export { default as contrast } from './contrast';
 export { mix, mixLab } from './mix';

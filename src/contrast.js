@@ -39,49 +39,6 @@ function contrast(base = '#fff', c, precision = 2) {
   return round((light + 0.05) / (dark + 0.05), precision);
 }
 
-contrast.find = (base, {
-  targetContrast = 7,
-  hue,
-  saturation = 1,
-}) => {
-  const _base = instanceOfColor(base) ? base : color(base);
-  if (!_base) return undefined;
-
-  const CONTRAST_DELTA = 0.015;
-  const MAX_ITERATION_COUNT = 7;
-
-  let minL = 0;
-  let maxL = 1;
-
-  let c;
-  let currentContrast = 0;
-  let i = 0;
-
-  while (i <= MAX_ITERATION_COUNT) {
-    c = sRGBColor.hsl({
-      hue,
-      saturation,
-      lightness: (maxL + minL) / 2,
-    });
-    currentContrast = contrast(_base, c);
-
-    if (approx(currentContrast, targetContrast, CONTRAST_DELTA)) return c;
-
-    if (
-      (currentContrast > targetContrast && c.luminance > _base.luminance)
-      || (currentContrast < targetContrast && c.luminance < _base.luminance)
-    ) {
-      maxL = (maxL + minL) / 2;
-    } else {
-      minL = (maxL + minL) / 2;
-    }
-
-    i += 1;
-  }
-
-  return c;
-};
-
 contrast.min = (base, colorArray) => {
   const _base = instanceOfColor(base) ? base : color(base);
   if (!_base) return undefined;
@@ -133,6 +90,67 @@ contrast.validate = (base, c) => {
     'wcag-aaa-normal-text': _contrast >= 7,
     'wcag-aaa-large-text': _contrast >= 4.5,
   };
+};
+
+contrast.find = (base, {
+  targetContrast = 7,
+  hue,
+  saturation = 1,
+}) => {
+  const _base = instanceOfColor(base) ? base : color(base);
+  if (!_base) return undefined;
+
+  const output = [];
+  const yb = _base.luminance;
+  const y0 = targetContrast * (yb + 0.05) - 0.05;
+  const y1 = (yb + 0.05) / targetContrast - 0.05;
+  if (y0 >= 0 && y0 <= 1) output.push(y0);
+  if (y1 >= 0 && y1 <= 1) output.push(y1);
+
+  if (!output.length) return output;
+
+  return output.map((y) => {
+    const DELTA = 0.0025;
+    const MAX_ITERATION_COUNT = 7;
+
+    let minL = 0;
+    let maxL = 1;
+
+    let c;
+    let i = 0;
+
+    while (i <= MAX_ITERATION_COUNT) {
+      c = sRGBColor.hsl({
+        hue,
+        saturation,
+        lightness: (maxL + minL) / 2,
+      });
+
+      const yc = c.luminance;
+
+      if (approx(yc, y, DELTA) || i === MAX_ITERATION_COUNT) {
+        let f;
+        if ((yc > y && y > yb) || (yc < y && y < yb)) {
+          f = 0;
+        } else if (yc > y && y < yb) {
+          f = -1;
+        } else {
+          f = 1;
+        }
+        return f ? c.copyWith({ lightness: c.lightness + f * 0.004 }) : c;
+      }
+
+      if (yc > y) {
+        maxL = (maxL + minL) / 2;
+      } else {
+        minL = (maxL + minL) / 2;
+      }
+
+      i += 1;
+    }
+
+    return c;
+  });
 };
 
 export default contrast;

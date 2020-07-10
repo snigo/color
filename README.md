@@ -187,6 +187,12 @@ mix('green', 'transparent', '100%').name; // "green"
   * [XYZColor.prototype.toLab()](#xyzcolorprototypetolab)
   * [XYZColor.prototype.toXyzArray()](#xyzcolorprototypetoxyzarray)
 
+* [contrast()](#contrast)
+  * [contrast.find()](#contrastfind)
+  * [contrast.min()](#contrastmin)
+  * [contrast.max()](#contrastmax)
+  * [contrast.validate()](#contrastvalidate)
+
 
 ***
 
@@ -1428,7 +1434,7 @@ Returns array of XYZ tristimulus values of CIE standard illuminant of current co
 
 ***
 
-#### `LabColor.prototype.adapt(whitePiont)`
+#### `XYZColor.prototype.adapt(whitePiont)`
 
 Adapts XYZColor from D50 white point to D65 white point or vice versa. Returns new instance of XYZColor adapted to new white point.
 
@@ -1446,7 +1452,7 @@ pinkXyzD50.x; // 0.7244961
 
 ***
 
-#### `LabColor.prototype.toRgb()`
+#### `XYZColor.prototype.toRgb()`
 
 Returns new sRGBColor instance of the color representing the color in sRGB Color space.
 
@@ -1498,5 +1504,193 @@ import { XYZColor } from '@snigos/color';
 
 const xyzColor = new XYZColor({ x: 0.5505, y: 0.234, z: 0.98, alpha: 0.45 });
 xyzColor.toXyzArray(); // [0.5505, 0.234, 0.98]
+
+```
+
+***
+
+### `contrast()`
+
+Calcurates absolute contrast factor of 1 between two provided colors. Returns number in [1...21] range, **regardless of the order** of arguments. The third argument is precision of the output.
+
+| **Parameter** | **Type**   | **Default value** | **Notes**                                      |
+|---------------|------------|-------------------|------------------------------------------------|
+| `base`        | `AnyColor` | color('white')    | Base/background color to be compared           |
+| `compareColor`| `AnyColor` |                   | Color to be compared against base color        |
+| `precision`   | `number`   | 2                 | Output precision                               |
+ 
+```js
+
+import { contrast } from '@snigos/color';
+
+contrast('white', 'black'); // 21
+contrast('black', 'white'); // 21
+
+contrast('blue', 'salmon', 9); // 3.436280745
+
+```
+
+`contrast()` function is curry-friendly, meaning if only one argument (base color) is provided, it will return function that will expect the color to compare and optional precision as arguments. It is useful when you have single background color and want to compare other colors to it.
+
+```js
+
+import { contrast } from '@snigos/color';
+
+const bgContrast = contrast('#fafeff');
+typeof bgContrast; // function
+bgContrast('red'); // 3.94
+bgContrast('green', 4); // 5.0607
+bgContrast('blue', 1); // 8.5
+
+```
+
+***
+
+#### `contrast.find()`
+
+```js
+
+contrast.find(base, descriptor);
+
+```
+
+Returns array of sRGBColor instances according to descriptor with hue, saturation and target contrast value compared to provided base color. If no colors found with given target contrast, returns empty array. If two colors has been returned, the first color will always be lighter and the second darker than provided base color.
+
+Color descriptor object:
+| **Property**      | **Type**   | **Default value**           | **Notes**                                        |
+|-------------------|------------|-----------------------------|--------------------------------------------------|
+| `hue`             | `number`   |                             | Hue value in 0...360 range, representing degrees |
+| `saturation`      | `number`   | 1                           | Saturation value in 0...1 range                  |
+| `targetContrast`  | `number`   | 7                           | Target contrast between output and base colors   |
+
+```js
+
+import { color, contrast } from '@snigos/color';
+
+const bgColor = color('#2a2e2f');
+const [primaryColor] = contrast.find(bgColor, {
+  hue: 264,
+  targetContrast: 4.75,
+});
+
+contrast(bgColor, primaryColor); // 4.77
+primaryColor.hue; // 264
+primaryColor.saturation; // 1
+primaryColor.toHslString(); // hsl(264deg 100% 74.6%)
+
+const shades = contrast.find('#777', {
+  hue: 0,
+  saturation: 0,
+  targetContrast: 3.2,
+});
+
+shades.length; // 2
+shades.map((shade) => contrast('#777', shade)); // [3.2, 3.29]
+shades.map((shade) => shade.toRgbString()); // ["rgb(218 218 218)", "rgb(40 40 40)"]
+shades.map((shade) => shade.mode); // [0, 1]
+
+```
+
+As with `contrast()` function, currying will work with any contrast method:
+
+```js
+
+import { contrast } from '@snigos/color';
+
+const bgContrast = contrast('#2a2e2f');
+const [primaryColor] = bgContrast.find({
+  hue: 264,
+  saturation: 0.5,
+  targetContrast: 7,
+});
+
+bgContrast(primaryColor); // 7
+primaryColor.hue; // 264
+primaryColor.saturation; // 0.5
+primaryColor.toHexString(); // #c5b0e5
+
+```
+
+**NOTE:** Due to the fact there is no formula to achive the result in mathematical way, at least to my knowledge, `find` method uses binary search (aka divide and conquer) to match the closest color. Matching delta is 0.025 and if it's not met algorithm outputs the closest greater to target contrast color.
+
+***
+
+#### `contrast.min()`
+#### `contrast.max()`
+
+```js
+
+contrast.min(base, colorArray);
+contrast.max(base, colorArray);
+
+```
+
+Returns sRGBColor instance of color from colorArray with minimum and maximum contrast to base color accordingly. If two or more colors will result in the same contrast, the first one will be returned.
+
+```js
+
+import { contrast } from '@snigos/color';
+
+const minContrast = contrast.min('white', ['red', 'green', 'blue']);
+const maxContrast = contrast.max('white', ['red', 'green', 'blue']);
+minContrast.name; // red
+maxContrast.name; // blue
+
+const bgContrast = contrast('#a56');
+const fontColor = bgContrast.max(['black', 'white']);
+fontColor.name; // white
+bgContrast('white'); // 5
+bgContrast('black'); // 4.2
+
+```
+
+***
+
+#### `contrast.validate()`
+
+```js
+
+contrast.min(base, anyColor);
+
+```
+
+Returns [WCAG2.x](https://www.w3.org/WAI/standards-guidelines/wcag/) validation response based on the contrast between colors provided.
+
+Validation response object:
+| **Property**           | **Type**    | **Notes**                                                                     |
+|------------------------|-------------|-------------------------------------------------------------------------------|
+| `wcag-aa-large-text`   | `boolean`   | Boolean indicating success criteria for WCAG Level AA Large Text (`>= 3`)     |
+| `wcag-aa-normal-text`  | `boolean`   | Boolean indicating success criteria for WCAG Level AA Normal Text (`>= 4.5`)  |
+| `wcag-aa-ui`           | `boolean`   | Boolean indicating success criteria for WCAG Level AA UI Components (`>= 3`)  |
+| `wcag-aaa-large-text`  | `boolean`   | Boolean indicating success criteria for WCAG Level AAA Large Text (`>= 4.5`)  |
+| `wcag-aaa-normal-text` | `boolean`   | Boolean indicating success criteria for WCAG Level AAA Normal Text (`>= 7`)   |
+
+```js
+
+import { contrast } from '@snigos/color';
+
+const bgContrast = contrast('white');
+bgContrast.validate('#4242FF');
+/*
+  {
+    wcag-aa-large-text: true,
+    wcag-aa-normal-text: true,
+    wcag-aa-ui: true,
+    wcag-aaa-large-text: true,
+    wcag-aaa-normal-text: false
+  }
+*/
+
+bgContrast('#4242FF'); // 6.08
+
+```
+
+**NOTE:** If you're looking for WCAG validation criteria only you **shall not** rely on `contrast()` value, but should use `contrast.validate()` instead because of the rounding precision. `contrast()` function mathematically rounds contrast value, so `4.4954` will be correctly shown as `4.5`, however `contrast.validate` function will not validate such contrast as valid according to WCAG Level AA Normal Text requirements.
+
+```js
+
+contrast('white', '#ec1400'); // 4.5
+contrast.validate('white', '#ec1400')['wcag-aa-normal-text']; // false
+contrast('white', '#ec1400', 5); // 4.49886 (Less than 4.5)
 
 ```
