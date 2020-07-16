@@ -23,6 +23,7 @@ import {
 } from '../utils';
 
 import { getColorName } from '../named';
+import sRGBColor from '../srgb/srgb.class';
 
 class DisplayP3Color {
   constructor({
@@ -268,7 +269,7 @@ class DisplayP3Color {
 
   get name() {
     const name = getColorName(this.toHexString().substring(0, 7));
-    return (this.alpha === 1 || !name) ? name : `${name}*`;
+    return (this.alpha === 1 || !name) ? `p3:${name}` : `p3:${name}*`;
   }
 
   toLin() {
@@ -312,6 +313,10 @@ class DisplayP3Color {
     return this.toXyz().toRgb();
   }
 
+  toRgbEquiv() {
+    return new sRGBColor(this);
+  }
+
   toGrayscale() {
     if (this.saturation === 0) return this;
     const l = this.luminance > 0.0393
@@ -339,8 +344,8 @@ class DisplayP3Color {
       ? `${round(this.alpha * 100, 0)}%`
       : this.alpha;
     return this.alpha < 1
-      ? `rgb(${_red} ${_green} ${_blue} / ${_alpha})`
-      : `rgb(${_red} ${_green} ${_blue})`;
+      ? `p3:rgb(${_red} ${_green} ${_blue} / ${_alpha})`
+      : `p3:rgb(${_red} ${_green} ${_blue})`;
   }
 
   toColorString() {
@@ -359,15 +364,15 @@ class DisplayP3Color {
 
   toHslString(precision = 1) {
     return this.alpha < 1
-      ? `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
-      : `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
+      ? `p3:hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
+      : `p3:hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
   }
 
   toHwbString(precision = 1) {
     const [h, w, b] = this.toHwb();
     return this.alpha < 1
-      ? `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
-      : `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
+      ? `p3:hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
+      : `p3:hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
   }
 
   withAlpha(value = 1) {

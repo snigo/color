@@ -208,7 +208,7 @@ class LabColor {
     }
 
     if ('hue' in params || 'chroma' in params) {
-      return LabColor.hsl({
+      return LabColor.lch({
         lightness: this.lightness,
         chroma: this.chroma,
         hue: this.hue,
@@ -220,7 +220,7 @@ class LabColor {
     if ('lightness' in params) {
       return LabColor.lab({
         lightness: this.lightness,
-        a: this.b,
+        a: this.a,
         b: this.b,
         alpha: this.alpha,
         ...params,

@@ -1,286 +1,3 @@
-const RGB_XYZ_MATRIX = [
-  [0.4124564, 0.3575761, 0.1804375],
-  [0.2126729, 0.7151522, 0.072175],
-  [0.0193339, 0.119192, 0.9503041],
-];
-
-const XYZ_RGB_MATRIX = [
-  [3.2404542, -1.5371385, -0.4985314],
-  [-0.969266, 1.8760108, 0.041556],
-  [0.0556434, -0.2040259, 1.0572252],
-];
-
-const P3_XYZ_MATRIX = [
-  [0.4865709486482162, 0.26566769316909306, 0.1982172852343625],
-  [0.2289745640697488, 0.6917385218365064, 0.079286914093745],
-  [0, 0.04511338185890264, 1.043944368900976],
-];
-
-const XYZ_P3_MATRIX = [
-  [2.493496911941425, -0.9313836179191239, -0.40271078445071684],
-  [-0.8294889695615747, 1.7626640603183463, 0.023624685841943577],
-  [0.03584583024378447, -0.07617238926804182, 0.9568845240076872],
-];
-
-const D65_D50_MATRIX = [
-  [1.0478112, 0.0228866, -0.0501270],
-  [0.0295424, 0.9904844, -0.0170491],
-  [-0.0092345, 0.0150436, 0.7521316],
-];
-
-const D50_D65_MATRIX = [
-  [0.9555766, -0.0230393, 0.0631636],
-  [-0.0282895, 1.0099416, 0.0210077],
-  [0.0122982, -0.020483, 1.3299098],
-];
-
-const D50 = [0.96422, 1, 0.82521];
-const D65 = [0.95047, 1, 1.08883];
-
-const OCT_RANGE = [0, 255];
-const ONE_RANGE = [0, 1];
-const BYTE_RANGE = [-128, 127];
-const CHROMA_RANGE = [0, 260];
-
-const HEX_RE = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/;
-const HEX_RE_S = /^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])?$/;
-const CMA_RE = /\(\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*(?:,\s*([0-9a-z.%+-]+)\s*)?\)$/;
-const WSP_RE = /\(\s*([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s*(?:\s+\/\s+([0-9a-z.%+-]+)\s*)?\)$/;
-
-/* eslint-disable import/no-cycle */
-
-class LabColor {
-  constructor({
-    lightness,
-    a,
-    b,
-    chroma,
-    hue,
-    alpha,
-  }) {
-    Object.defineProperties(this, {
-      lightness: {
-        value: lightness,
-      },
-      a: {
-        value: a,
-      },
-      b: {
-        value: b,
-      },
-      chroma: {
-        value: chroma,
-      },
-      hue: {
-        value: hue,
-      },
-      alpha: {
-        value: alpha,
-      },
-      whitePoint: {
-        value: D50,
-      },
-      profile: {
-        value: 'cie-lab',
-      },
-    });
-  }
-
-  static lab({
-    lightness,
-    a,
-    b,
-    alpha,
-  }) {
-    const _lightness = assumePercent(lightness);
-    const _a = assumeByte(a);
-    const _b = assumeByte(b);
-
-    if (!defined(_lightness, _a, _b)) return undefined;
-
-    return new LabColor({
-      lightness: _lightness,
-      a: _a,
-      b: _b,
-      chroma: assumeChroma(Math.sqrt(_a ** 2 + _b ** 2)),
-      hue: assumeHue((Math.atan2(round(_b, 3), round(_a, 3)) * 180) / Math.PI),
-      alpha: assumeAlpha(alpha),
-    });
-  }
-
-  static labArray([lightness, a, b, alpha]) {
-    return LabColor.lab({
-      lightness,
-      a,
-      b,
-      alpha,
-    });
-  }
-
-  static lch({
-    lightness,
-    chroma,
-    hue,
-    alpha,
-  }) {
-    const _lightness = assumePercent(lightness);
-    const _chroma = assumeChroma(chroma);
-    const _hue = assumeHue(hue);
-
-    if (!defined(_lightness, _chroma, _hue)) return undefined;
-
-    return new LabColor({
-      lightness: _lightness,
-      a: assumeByte(_chroma * Math.cos((_hue * Math.PI) / 180)),
-      b: assumeByte(_chroma * Math.sin((_hue * Math.PI) / 180)),
-      chroma: _chroma,
-      hue: _hue,
-      alpha: assumeAlpha(alpha),
-    });
-  }
-
-  static lchArray([lightness, chroma, hue, alpha]) {
-    return LabColor.lch({
-      lightness,
-      chroma,
-      hue,
-      alpha,
-    });
-  }
-
-  get hrad() {
-    return round(this.hue * (Math.PI / 180), 7);
-  }
-
-  get hgrad() {
-    return round(this.hue / 0.9, 7);
-  }
-
-  get hturn() {
-    return round(this.hue / 360, 7);
-  }
-
-  get luminance() {
-    return this.toXyz().y;
-  }
-
-  get mode() {
-    return +(this.luminance < 0.18);
-  }
-
-  toXyz(whitePoint = this.whitePoint) {
-    const e = 0.008856;
-    const k = 903.3;
-    const l = this.lightness * 100;
-    const fy = (l + 16) / 116;
-    const fx = this.a / 500 + fy;
-    const fz = fy - this.b / 200;
-    const [x, y, z] = [
-      fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k,
-      l > k * e ? ((l + 16) / 116) ** 3 : l / k,
-      fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k,
-    ].map((V, i) => round(V * this.whitePoint[i], 7));
-
-    return new XYZColor({
-      x,
-      y,
-      z,
-      alpha: this.alpha,
-      whitePoint: this.whitePoint,
-    }).adapt(whitePoint);
-  }
-
-  toRgb() {
-    return this.toXyz(D65).toRgb();
-  }
-
-  toP3() {
-    return this.toXyz(D65).toP3();
-  }
-
-  toLab() {
-    return this;
-  }
-
-  toGrayscale() {
-    return this.copyWith({
-      a: 0,
-      b: 0,
-    });
-  }
-
-  toLchString(precision = 3) {
-    return this.alpha < 1
-      ? `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg / ${this.alpha})`
-      : `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg)`;
-  }
-
-  toLabString(precision = 3) {
-    return this.alpha < 1
-      ? `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)} / ${this.alpha})`
-      : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
-  }
-
-  withAlpha(value = 1) {
-    if (this.alpha === value) return this;
-    return new LabColor({
-      lightness: this.lightness,
-      a: this.a,
-      b: this.b,
-      chroma: this.chroma,
-      hue: this.hue,
-      alpha: assumeAlpha(value),
-    });
-  }
-
-  copyWith(params) {
-    if ('a' in params || 'b' in params) {
-      return LabColor.lab({
-        lightness: this.lightness,
-        a: this.b,
-        b: this.b,
-        alpha: this.alpha,
-        ...params,
-      });
-    }
-
-    if ('hue' in params || 'chroma' in params) {
-      return LabColor.hsl({
-        lightness: this.lightness,
-        chroma: this.chroma,
-        hue: this.hue,
-        alpha: this.alpha,
-        ...params,
-      });
-    }
-
-    if ('lightness' in params) {
-      return LabColor.lab({
-        lightness: this.lightness,
-        a: this.b,
-        b: this.b,
-        alpha: this.alpha,
-        ...params,
-      });
-    }
-
-    if ('alpha' in params) {
-      return this.opacity(params.alpha);
-    }
-
-    return this;
-  }
-
-  invert() {
-    return LabColor.lab({
-      lightness: this.lightness,
-      a: -this.a,
-      b: -this.b,
-      alpha: this.alpha,
-    });
-  }
-}
-
 // eslint-disable-next-line no-extend-native
 Map.prototype.setMany = function(key, value, ...aliases) {
   this.set(key, value);
@@ -766,8 +483,8 @@ class DisplayP3Color {
       ? `${round(this.alpha * 100, 0)}%`
       : this.alpha;
     return this.alpha < 1
-      ? `rgb(${_red} ${_green} ${_blue} / ${_alpha})`
-      : `rgb(${_red} ${_green} ${_blue})`;
+      ? `p3:rgb(${_red} ${_green} ${_blue} / ${_alpha})`
+      : `p3:rgb(${_red} ${_green} ${_blue})`;
   }
 
   toColorString() {
@@ -786,15 +503,15 @@ class DisplayP3Color {
 
   toHslString(precision = 1) {
     return this.alpha < 1
-      ? `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
-      : `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
+      ? `p3:hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
+      : `p3:hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
   }
 
   toHwbString(precision = 1) {
     const [h, w, b] = this.toHwb();
     return this.alpha < 1
-      ? `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
-      : `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
+      ? `p3:hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
+      : `p3:hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
   }
 
   withAlpha(value = 1) {
@@ -886,6 +603,31 @@ class XYZColor {
 
   static get D65() {
     return D65;
+  }
+
+  static xyz({
+    x,
+    y,
+    z,
+    alpha,
+    whitePoint,
+  }) {
+    return new XYZColor({
+      x,
+      y,
+      z,
+      alpha,
+      whitePoint,
+    });
+  }
+
+  static xyzArray([x, y, z, alpha]) {
+    return XYZColor.xyz({
+      x,
+      y,
+      z,
+      alpha,
+    });
   }
 
   get luminance() {
@@ -1510,41 +1252,364 @@ function instanceOfColor(c) {
     || c instanceof XYZColor;
 }
 
-function mix(base, c, a = 1) {
-  const _base = (instanceOfColor(base) ? base : color(base)).toRgb();
-  const _c = (instanceOfColor(c) ? c : color(c)).toRgb();
-  if (!_base && !_c) return undefined;
-  if (!_base) return _c;
-  if (!_c) return _base;
-
-  const factor = _c.alpha * assumePercent(a);
-
-  return sRGBColor.rgb({
-    red: _base.red + factor * (_c.red - _base.red),
-    green: _base.green + factor * (_c.green - _base.green),
-    blue: _base.blue + factor * (_c.blue - _base.blue),
-    alpha: _base.alpha * (1 + factor),
-  });
+function applyModel(model, c) {
+  if (!c) return undefined;
+  switch (model) {
+    case 'rgb':
+    case 'hsl':
+      return instanceOfColor(c) ? c.toRgb() : applyModel(model, color(c));
+    case 'lab':
+    case 'lch':
+      return instanceOfColor(c) ? c.toLab() : applyModel(model, color(c));
+    case 'xyz':
+      return instanceOfColor(c) ? c.toXyz() : applyModel(model, color(c));
+    case 'p3:rgb':
+    case 'p3:hsl':
+      return instanceOfColor(c) ? c.toP3() : applyModel(model, color(c));
+    default:
+      return undefined;
+  }
 }
 
-function mixLab(base, c, a = 1) {
-  const _base = (instanceOfColor(base) ? base : color(base)).toLab();
-  const _c = (instanceOfColor(c) ? c : color(c)).toLab();
-  if (!_base && !_c) return undefined;
-  if (!_base) return _c;
-  if (!_c) return _base;
-
-  const factor = _c.alpha * assumePercent(a);
-
-  return LabColor.lch({
-    lightness: _base.lightness + factor * (_c.lightness - _base.lightness),
-    chroma: _base.chroma + factor * (_c.chroma - _base.chroma),
-    hue: _base.hue + factor * (_c.hue - _base.hue),
-    alpha: _base.alpha * (1 + factor),
-  });
+function getHueDiff(from, to, dir) {
+  const ccw = -(modulo(from - to, 360) || 360);
+  const cw = modulo(to - from, 360) || 360;
+  switch (dir) {
+    case -1:
+      return ccw;
+    case 1:
+      return cw;
+    case 0:
+    default:
+      return ((cw % 360 <= 180) ? cw : ccw);
+  }
 }
 
-function contrast(base = '#fff', c, precision = 2) {
+/* eslint-disable import/no-cycle */
+
+class LabColor {
+  constructor({
+    lightness,
+    a,
+    b,
+    chroma,
+    hue,
+    alpha,
+  }) {
+    Object.defineProperties(this, {
+      lightness: {
+        value: lightness,
+      },
+      a: {
+        value: a,
+      },
+      b: {
+        value: b,
+      },
+      chroma: {
+        value: chroma,
+      },
+      hue: {
+        value: hue,
+      },
+      alpha: {
+        value: alpha,
+      },
+      whitePoint: {
+        value: D50,
+      },
+      profile: {
+        value: 'cie-lab',
+      },
+    });
+  }
+
+  static lab({
+    lightness,
+    a,
+    b,
+    alpha,
+  }) {
+    const _lightness = assumePercent(lightness);
+    const _a = assumeByte(a);
+    const _b = assumeByte(b);
+
+    if (!defined(_lightness, _a, _b)) return undefined;
+
+    return new LabColor({
+      lightness: _lightness,
+      a: _a,
+      b: _b,
+      chroma: assumeChroma(Math.sqrt(_a ** 2 + _b ** 2)),
+      hue: assumeHue((Math.atan2(round(_b, 3), round(_a, 3)) * 180) / Math.PI),
+      alpha: assumeAlpha(alpha),
+    });
+  }
+
+  static labArray([lightness, a, b, alpha]) {
+    return LabColor.lab({
+      lightness,
+      a,
+      b,
+      alpha,
+    });
+  }
+
+  static lch({
+    lightness,
+    chroma,
+    hue,
+    alpha,
+  }) {
+    const _lightness = assumePercent(lightness);
+    const _chroma = assumeChroma(chroma);
+    const _hue = assumeHue(hue);
+
+    if (!defined(_lightness, _chroma, _hue)) return undefined;
+
+    return new LabColor({
+      lightness: _lightness,
+      a: assumeByte(_chroma * Math.cos((_hue * Math.PI) / 180)),
+      b: assumeByte(_chroma * Math.sin((_hue * Math.PI) / 180)),
+      chroma: _chroma,
+      hue: _hue,
+      alpha: assumeAlpha(alpha),
+    });
+  }
+
+  static lchArray([lightness, chroma, hue, alpha]) {
+    return LabColor.lch({
+      lightness,
+      chroma,
+      hue,
+      alpha,
+    });
+  }
+
+  get hrad() {
+    return round(this.hue * (Math.PI / 180), 7);
+  }
+
+  get hgrad() {
+    return round(this.hue / 0.9, 7);
+  }
+
+  get hturn() {
+    return round(this.hue / 360, 7);
+  }
+
+  get luminance() {
+    return this.toXyz().y;
+  }
+
+  get mode() {
+    return +(this.luminance < 0.18);
+  }
+
+  toXyz(whitePoint = this.whitePoint) {
+    const e = 0.008856;
+    const k = 903.3;
+    const l = this.lightness * 100;
+    const fy = (l + 16) / 116;
+    const fx = this.a / 500 + fy;
+    const fz = fy - this.b / 200;
+    const [x, y, z] = [
+      fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k,
+      l > k * e ? ((l + 16) / 116) ** 3 : l / k,
+      fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k,
+    ].map((V, i) => round(V * this.whitePoint[i], 7));
+
+    return new XYZColor({
+      x,
+      y,
+      z,
+      alpha: this.alpha,
+      whitePoint: this.whitePoint,
+    }).adapt(whitePoint);
+  }
+
+  toRgb() {
+    return this.toXyz(D65).toRgb();
+  }
+
+  toP3() {
+    return this.toXyz(D65).toP3();
+  }
+
+  toLab() {
+    return this;
+  }
+
+  toGrayscale() {
+    return this.copyWith({
+      a: 0,
+      b: 0,
+    });
+  }
+
+  toLchString(precision = 3) {
+    return this.alpha < 1
+      ? `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg / ${this.alpha})`
+      : `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg)`;
+  }
+
+  toLabString(precision = 3) {
+    return this.alpha < 1
+      ? `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)} / ${this.alpha})`
+      : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
+  }
+
+  withAlpha(value = 1) {
+    if (this.alpha === value) return this;
+    return new LabColor({
+      lightness: this.lightness,
+      a: this.a,
+      b: this.b,
+      chroma: this.chroma,
+      hue: this.hue,
+      alpha: assumeAlpha(value),
+    });
+  }
+
+  copyWith(params) {
+    if ('a' in params || 'b' in params) {
+      return LabColor.lab({
+        lightness: this.lightness,
+        a: this.b,
+        b: this.b,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('hue' in params || 'chroma' in params) {
+      return LabColor.lch({
+        lightness: this.lightness,
+        chroma: this.chroma,
+        hue: this.hue,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('lightness' in params) {
+      return LabColor.lab({
+        lightness: this.lightness,
+        a: this.a,
+        b: this.b,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('alpha' in params) {
+      return this.opacity(params.alpha);
+    }
+
+    return this;
+  }
+
+  invert() {
+    return LabColor.lab({
+      lightness: this.lightness,
+      a: -this.a,
+      b: -this.b,
+      alpha: this.alpha,
+    });
+  }
+}
+
+/* eslint-disable import/no-cycle */
+
+const RGB_XYZ_MATRIX = [
+  [0.4124564, 0.3575761, 0.1804375],
+  [0.2126729, 0.7151522, 0.072175],
+  [0.0193339, 0.119192, 0.9503041],
+];
+
+const XYZ_RGB_MATRIX = [
+  [3.2404542, -1.5371385, -0.4985314],
+  [-0.969266, 1.8760108, 0.041556],
+  [0.0556434, -0.2040259, 1.0572252],
+];
+
+const P3_XYZ_MATRIX = [
+  [0.4865709486482162, 0.26566769316909306, 0.1982172852343625],
+  [0.2289745640697488, 0.6917385218365064, 0.079286914093745],
+  [0, 0.04511338185890264, 1.043944368900976],
+];
+
+const XYZ_P3_MATRIX = [
+  [2.493496911941425, -0.9313836179191239, -0.40271078445071684],
+  [-0.8294889695615747, 1.7626640603183463, 0.023624685841943577],
+  [0.03584583024378447, -0.07617238926804182, 0.9568845240076872],
+];
+
+const D65_D50_MATRIX = [
+  [1.0478112, 0.0228866, -0.0501270],
+  [0.0295424, 0.9904844, -0.0170491],
+  [-0.0092345, 0.0150436, 0.7521316],
+];
+
+const D50_D65_MATRIX = [
+  [0.9555766, -0.0230393, 0.0631636],
+  [-0.0282895, 1.0099416, 0.0210077],
+  [0.0122982, -0.020483, 1.3299098],
+];
+
+const D50 = [0.96422, 1, 0.82521];
+const D65 = [0.95047, 1, 1.08883];
+
+const OCT_RANGE = [0, 255];
+const ONE_RANGE = [0, 1];
+const BYTE_RANGE = [-128, 127];
+const CHROMA_RANGE = [0, 260];
+
+const HEX_RE = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/;
+const HEX_RE_S = /^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])?$/;
+const CMA_RE = /\(\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*(?:,\s*([0-9a-z.%+-]+)\s*)?\)$/;
+const WSP_RE = /\(\s*([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s*(?:\s+\/\s+([0-9a-z.%+-]+)\s*)?\)$/;
+
+const MODEL_PARAMS = {
+  rgb: [sRGBColor, ['red', 'green', 'blue', 'alpha']],
+  hsl: [sRGBColor, ['hue', 'saturation', 'lightness', 'alpha']],
+  lab: [LabColor, ['lightness', 'a', 'b', 'alpha']],
+  lch: [LabColor, ['lightness', 'chroma', 'hue', 'alpha']],
+  xyz: [XYZColor, ['x', 'y', 'z', 'alpha']],
+  'p3:rgb': [DisplayP3Color, ['red', 'green', 'blue', 'alpha']],
+  'p3:hsl': [DisplayP3Color, ['hue', 'saturation', 'lightness', 'alpha']],
+};
+
+function mix(model = 'rgb', descriptor) {
+  if (typeof model !== 'string') return undefined;
+  if (!descriptor) return (descriptor) => mix(model, descriptor);
+
+  const {
+    start,
+    end,
+    alpha = 1,
+    hueDirection = 0,
+  } = descriptor;
+
+  model = model.trim().toLowerCase();
+  const _start = applyModel(model, start);
+  const _end = applyModel(model, end);
+  if (!_start && !_end) return undefined;
+  if (!_start) return _end;
+  if (!_end) return _start;
+
+  const factor = _end.alpha * assumePercent(alpha);
+  const [ColorConstructor, params] = MODEL_PARAMS[model];
+  if (model.startsWith('p3:')) model = model.substring(3);
+
+  return ColorConstructor[`${model}Array`](params.map((p) => {
+    if (p === 'hue') return _start[p] + factor * getHueDiff(_start[p], _end[p], hueDirection);
+    if (p === 'alpha') return _start[p] * (1 + factor);
+    return _start[p] + factor * (_end[p] - _start[p]);
+  }));
+}
+
+function contrast(base = '#fff', compareColor, precision = 2) {
   const _base = instanceOfColor(base) ? base : color(base);
   if (!_base) return undefined;
   if (_base.alpha !== 1) throw SyntaxError('Base color cannot be semitransparent.');
@@ -1558,19 +1623,21 @@ function contrast(base = '#fff', c, precision = 2) {
     return curried;
   }
 
-  let _c = instanceOfColor(c) ? c : color(c);
+  let _c = instanceOfColor(compareColor) ? compareColor : color(compareColor);
   if (_c.alpha < 1) {
+    let model;
     if (_c instanceof sRGBColor) {
-      _c = mix(_base, _c);
+      model = 'rgb';
+    } else if (_c instanceof DisplayP3Color) {
+      model = 'p3:rgb';
     } else if (_c instanceof LabColor) {
-      _c = mixLab(_base, _c);
-    } else if (_c instanceof XYZColor && _c.whitePoint === XYZColor.D65) {
-      _c = mix(_base, _c.toRgb()).toXyz();
-    } else if (_c instanceof XYZColor && _c.whitePoint === XYZColor.D50) {
-      _c = mixLab(_base, _c.toLab()).toXyz();
+      model = 'lab';
+    } else if (_c instanceof XYZColor) {
+      model = 'xyz';
     } else {
       return undefined;
     }
+    _c = mix(model, { start: _base, end: _c });
   }
   const dark = Math.min(_c.luminance, _base.luminance);
   const light = Math.max(_c.luminance, _base.luminance);
@@ -1635,8 +1702,15 @@ contrast.find = (base, {
   targetContrast = 7,
   hue,
   saturation = 1,
+  chroma = 100,
+  model = 'hsl',
 }) => {
-  const _base = instanceOfColor(base) ? base : color(base);
+  model = model.trim().toLowerCase();
+  if (model === 'xyz' || model === 'rgb') model = 'hsl';
+  if (model === 'p3:rgb') model = 'p3:hsl';
+  if (model === 'lab') model = 'lch';
+
+  const _base = applyModel(model, base);
   if (!_base) return undefined;
 
   const output = [];
@@ -1647,6 +1721,9 @@ contrast.find = (base, {
   if (y1 >= 0 && y1 <= 1) output.push(y1);
 
   if (!output.length) return output;
+
+  const [ColorConstructor] = MODEL_PARAMS[model];
+  if (model.startsWith('p3:')) model = model.substring(3);
 
   return output.map((y) => {
     const DELTA = 0.0025;
@@ -1659,9 +1736,10 @@ contrast.find = (base, {
     let i = 0;
 
     while (i <= MAX_ITERATION_COUNT) {
-      c = sRGBColor.hsl({
+      c = ColorConstructor[model]({
         hue,
         saturation,
+        chroma,
         lightness: (maxL + minL) / 2,
       });
 
@@ -1676,7 +1754,7 @@ contrast.find = (base, {
         } else {
           f = 1;
         }
-        return f ? c.copyWith({ lightness: c.lightness + f * 0.004 }) : c;
+        return f ? c.copyWith({ lightness: c.lightness + f * 0.004, hue }) : c;
       }
 
       if (yc > y) {
@@ -1691,41 +1769,6 @@ contrast.find = (base, {
     return c;
   });
 };
-
-const MODEL_PARAMS = {
-  rgb: [sRGBColor, ['red', 'green', 'blue', 'alpha']],
-  hsl: [sRGBColor, ['hue', 'saturation', 'lightness', 'alpha']],
-  lab: [LabColor, ['lightness', 'a', 'b', 'alpha']],
-  lch: [LabColor, ['lightness', 'chroma', 'hue', 'alpha']],
-};
-
-function applyModel(model, c) {
-  if (!c) return undefined;
-  switch (model) {
-    case 'rgb':
-    case 'hsl':
-      return instanceOfColor(c) ? c.toRgb() : applyModel(model, color(c));
-    case 'lab':
-    case 'lch':
-      return instanceOfColor(c) ? c.toLab() : applyModel(model, color(c));
-    default:
-      return undefined;
-  }
-}
-
-function getHueDelta(fromHue, toHue, stops, dir) {
-  const ccw = -(modulo(fromHue - toHue, 360) || 360);
-  const cw = modulo(toHue - fromHue, 360) || 360;
-  switch (dir) {
-    case -1:
-      return ccw / (stops + 1);
-    case 1:
-      return cw / (stops + 1);
-    case 0:
-    default:
-      return ((cw % 360 <= 180) ? cw : ccw) / (stops + 1);
-  }
-}
 
 function lerp(model = 'rgb', descriptor) {
   if (typeof model !== 'string') return undefined;
@@ -1750,8 +1793,10 @@ function lerp(model = 'rgb', descriptor) {
   if (_stops > 255) _stops = 255;
 
   const [ColorConstructor, params] = MODEL_PARAMS[model];
+  if (model.startsWith('p3:')) model = model.substring(3);
+
   const deltas = params.map((p) => p === 'hue'
-    ? getHueDelta(_from[p], _to[p], _stops, hueDirection)
+    ? getHueDiff(_from[p], _to[p], hueDirection) / (_stops + 1)
     : (_to[p] - _from[p]) / (_stops + 1));
 
   while (_stops > 0) {
@@ -1794,6 +1839,7 @@ function color(descriptor, rgbProfile = 'srgb') {
   if (typeof descriptor === 'string') {
     descriptor = descriptor.trim().toLowerCase();
     if (descriptor.startsWith('p3:')) return color(descriptor.substring(3), 'p3');
+
     if (namedColors.has(descriptor)) {
       const [red, green, blue, hue, saturation, lightness, alpha] = parseNamed(descriptor);
       return new (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)({
@@ -1845,4 +1891,4 @@ function color(descriptor, rgbProfile = 'srgb') {
   return undefined;
 }
 
-export { DisplayP3Color, LabColor, XYZColor, color, contrast, lerp, mix, mixLab, sRGBColor };
+export { DisplayP3Color, LabColor, XYZColor, color, contrast, lerp, mix, sRGBColor };

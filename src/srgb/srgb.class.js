@@ -23,6 +23,7 @@ import {
 } from '../utils';
 
 import { getColorName } from '../named';
+import DisplayP3Color from '../p3/display-p3.class';
 
 class sRGBColor {
   constructor({
@@ -306,6 +307,10 @@ class sRGBColor {
 
   toP3() {
     return this.toXyz().toP3();
+  }
+
+  toP3Equiv() {
+    return new DisplayP3Color(this);
   }
 
   toRgb() {

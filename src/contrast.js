@@ -1,11 +1,18 @@
 import sRGBColor from './srgb/srgb.class';
 import { color } from './color';
-import { round, approx, instanceOfColor } from './utils';
-import { mix, mixLab } from './mix';
+import {
+  round,
+  approx,
+  instanceOfColor,
+  applyModel,
+} from './utils';
+import mix from './mix';
 import LabColor from './lab/lab.class';
 import XYZColor from './xyz/xyz.class';
+import DisplayP3Color from './p3/display-p3.class';
+import { MODEL_PARAMS } from './constants';
 
-function contrast(base = '#fff', c, precision = 2) {
+function contrast(base = '#fff', compareColor, precision = 2) {
   const _base = instanceOfColor(base) ? base : color(base);
   if (!_base) return undefined;
   if (_base.alpha !== 1) throw SyntaxError('Base color cannot be semitransparent.');
@@ -19,19 +26,21 @@ function contrast(base = '#fff', c, precision = 2) {
     return curried;
   }
 
-  let _c = instanceOfColor(c) ? c : color(c);
+  let _c = instanceOfColor(compareColor) ? compareColor : color(compareColor);
   if (_c.alpha < 1) {
+    let model;
     if (_c instanceof sRGBColor) {
-      _c = mix(_base, _c);
+      model = 'rgb';
+    } else if (_c instanceof DisplayP3Color) {
+      model = 'p3:rgb';
     } else if (_c instanceof LabColor) {
-      _c = mixLab(_base, _c);
-    } else if (_c instanceof XYZColor && _c.whitePoint === XYZColor.D65) {
-      _c = mix(_base, _c.toRgb()).toXyz();
-    } else if (_c instanceof XYZColor && _c.whitePoint === XYZColor.D50) {
-      _c = mixLab(_base, _c.toLab()).toXyz();
+      model = 'lab';
+    } else if (_c instanceof XYZColor) {
+      model = 'xyz';
     } else {
       return undefined;
     }
+    _c = mix(model, { start: _base, end: _c });
   }
   const dark = Math.min(_c.luminance, _base.luminance);
   const light = Math.max(_c.luminance, _base.luminance);
@@ -96,8 +105,15 @@ contrast.find = (base, {
   targetContrast = 7,
   hue,
   saturation = 1,
+  chroma = 100,
+  model = 'hsl',
 }) => {
-  const _base = instanceOfColor(base) ? base : color(base);
+  model = model.trim().toLowerCase();
+  if (model === 'xyz' || model === 'rgb') model = 'hsl';
+  if (model === 'p3:rgb') model = 'p3:hsl';
+  if (model === 'lab') model = 'lch';
+
+  const _base = applyModel(model, base);
   if (!_base) return undefined;
 
   const output = [];
@@ -108,6 +124,9 @@ contrast.find = (base, {
   if (y1 >= 0 && y1 <= 1) output.push(y1);
 
   if (!output.length) return output;
+
+  const [ColorConstructor] = MODEL_PARAMS[model];
+  if (model.startsWith('p3:')) model = model.substring(3);
 
   return output.map((y) => {
     const DELTA = 0.0025;
@@ -120,9 +139,10 @@ contrast.find = (base, {
     let i = 0;
 
     while (i <= MAX_ITERATION_COUNT) {
-      c = sRGBColor.hsl({
+      c = ColorConstructor[model]({
         hue,
         saturation,
+        chroma,
         lightness: (maxL + minL) / 2,
       });
 
@@ -137,7 +157,7 @@ contrast.find = (base, {
         } else {
           f = 1;
         }
-        return f ? c.copyWith({ lightness: c.lightness + f * 0.004 }) : c;
+        return f ? c.copyWith({ lightness: c.lightness + f * 0.004, hue }) : c;
       }
 
       if (yc > y) {

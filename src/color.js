@@ -47,6 +47,7 @@ function color(descriptor, rgbProfile = 'srgb') {
   if (typeof descriptor === 'string') {
     descriptor = descriptor.trim().toLowerCase();
     if (descriptor.startsWith('p3:')) return color(descriptor.substring(3), 'p3');
+
     if (namedColors.has(descriptor)) {
       const [red, green, blue, hue, saturation, lightness, alpha] = parseNamed(descriptor);
       return new (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)({
@@ -108,4 +109,4 @@ export {
 
 export { default as contrast } from './contrast';
 export { default as lerp } from './lerp';
-export { mix, mixLab } from './mix';
+export { default as mix } from './mix';

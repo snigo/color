@@ -55,6 +55,31 @@ class XYZColor {
     return D65;
   }
 
+  static xyz({
+    x,
+    y,
+    z,
+    alpha,
+    whitePoint,
+  }) {
+    return new XYZColor({
+      x,
+      y,
+      z,
+      alpha,
+      whitePoint,
+    });
+  }
+
+  static xyzArray([x, y, z, alpha]) {
+    return XYZColor.xyz({
+      x,
+      y,
+      z,
+      alpha,
+    });
+  }
+
   get luminance() {
     return this.y;
   }

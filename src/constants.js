@@ -1,3 +1,9 @@
+/* eslint-disable import/no-cycle */
+import LabColor from './lab/lab.class';
+import DisplayP3Color from './p3/display-p3.class';
+import sRGBColor from './srgb/srgb.class';
+import XYZColor from './xyz/xyz.class';
+
 export const RGB_XYZ_MATRIX = [
   [0.4124564, 0.3575761, 0.1804375],
   [0.2126729, 0.7151522, 0.072175],
@@ -47,3 +53,13 @@ export const HEX_RE = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/
 export const HEX_RE_S = /^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])?$/;
 export const CMA_RE = /\(\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*(?:,\s*([0-9a-z.%+-]+)\s*)?\)$/;
 export const WSP_RE = /\(\s*([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s*(?:\s+\/\s+([0-9a-z.%+-]+)\s*)?\)$/;
+
+export const MODEL_PARAMS = {
+  rgb: [sRGBColor, ['red', 'green', 'blue', 'alpha']],
+  hsl: [sRGBColor, ['hue', 'saturation', 'lightness', 'alpha']],
+  lab: [LabColor, ['lightness', 'a', 'b', 'alpha']],
+  lch: [LabColor, ['lightness', 'chroma', 'hue', 'alpha']],
+  xyz: [XYZColor, ['x', 'y', 'z', 'alpha']],
+  'p3:rgb': [DisplayP3Color, ['red', 'green', 'blue', 'alpha']],
+  'p3:hsl': [DisplayP3Color, ['hue', 'saturation', 'lightness', 'alpha']],
+};
