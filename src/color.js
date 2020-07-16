@@ -12,22 +12,23 @@ import {
   round,
 } from './utils';
 import sRGBColor from './srgb/srgb.class';
+import DisplayP3Color from './p3/display-p3.class';
 import XYZColor from './xyz/xyz.class';
 import LabColor from './lab/lab.class';
 import { namedColors, parseNamed } from './named';
 
-function color(descriptor) {
+function color(descriptor, rgbProfile = 'srgb') {
   if (typeof descriptor === 'object') {
     if (defined(descriptor.red, descriptor.green, descriptor.blue)) {
-      return sRGBColor.rgb(descriptor);
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).rgb(descriptor);
     }
 
     if (defined(descriptor.hue, descriptor.saturation, descriptor.lightness)) {
-      return sRGBColor.hsl(descriptor);
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).hsl(descriptor);
     }
 
     if (defined(descriptor.hue, descriptor.whiteness, descriptor.blackness)) {
-      return sRGBColor.hwb(descriptor);
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).hwb(descriptor);
     }
 
     if (defined(descriptor.x, descriptor.y, descriptor.z)) {
@@ -45,9 +46,10 @@ function color(descriptor) {
 
   if (typeof descriptor === 'string') {
     descriptor = descriptor.trim().toLowerCase();
+    if (descriptor.startsWith('p3:')) return color(descriptor.substring(3), 'p3');
     if (namedColors.has(descriptor)) {
       const [red, green, blue, hue, saturation, lightness, alpha] = parseNamed(descriptor);
-      return new sRGBColor({
+      return new (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)({
         red,
         green,
         blue,
@@ -62,19 +64,26 @@ function color(descriptor) {
       const re = descriptor.length > 5 ? HEX_RE : HEX_RE_S;
       const rgba = extractGroups(re, descriptor).map(hexToOctet);
       rgba[3] = round(rgba[3] / 255, 7);
-      return sRGBColor.rgbArray(rgba);
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).rgbArray(rgba);
     }
 
     if (descriptor.startsWith('rgb')) {
-      return sRGBColor.rgbArray(descriptor.includes(',') ? extractFnCommaGroups('rgb', descriptor) : extractFnWhitespaceGroups('rgb', descriptor));
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)
+        .rgbArray(descriptor.includes(',')
+          ? extractFnCommaGroups('rgb', descriptor)
+          : extractFnWhitespaceGroups('rgb', descriptor));
     }
 
     if (descriptor.startsWith('hsl')) {
-      return sRGBColor.hslArray(descriptor.includes(',') ? extractFnCommaGroups('hsl', descriptor) : extractFnWhitespaceGroups('hsl', descriptor));
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)
+        .hslArray(descriptor.includes(',')
+          ? extractFnCommaGroups('hsl', descriptor)
+          : extractFnWhitespaceGroups('hsl', descriptor));
     }
 
     if (descriptor.startsWith('hwb')) {
-      return sRGBColor.hwbArray(extractFnWhitespaceGroups('hwb', descriptor));
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)
+        .hwbArray(extractFnWhitespaceGroups('hwb', descriptor));
     }
 
     if (descriptor.startsWith('lab')) {
@@ -93,8 +102,10 @@ export {
   color,
   LabColor,
   sRGBColor,
+  DisplayP3Color,
   XYZColor,
 };
 
 export { default as contrast } from './contrast';
+export { default as lerp } from './lerp';
 export { mix, mixLab } from './mix';

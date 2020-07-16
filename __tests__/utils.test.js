@@ -70,7 +70,7 @@ test('assumeAlpha function should convert alpha value to corresponding numeric',
 test('assumeByte function should convert byte value [-128...127] to corresponding numeric', () => {
   expect(assumeByte('0x0f')).toBe(15);
   expect(assumeByte('-37')).toBe(-37);
-  expect(assumeByte('0.361432353365865785673567547')).toBe(0.3614324);
+  expect(assumeByte('0.361432353365865785673567547')).toBe(0.361);
   expect(assumeByte('3.4e2')).toBe(127);
   expect(assumeByte(42)).toBe(42);
   expect(assumeByte(-214.2)).toBe(-128);
@@ -80,7 +80,7 @@ test('assumeByte function should convert byte value [-128...127] to correspondin
 test('assumeChroma function should convert chroma value [0...260] to corresponding numeric', () => {
   expect(assumeChroma('0x5f')).toBe(95);
   expect(assumeChroma('-3')).toBe(0);
-  expect(assumeChroma('103.361432353365865785673567547')).toBe(103.3614324);
+  expect(assumeChroma('103.361432353365865785673567547')).toBe(103.361);
   expect(assumeChroma('3.4e2')).toBe(260);
   expect(assumeChroma(42)).toBe(42);
   expect(assumeChroma(-214.2)).toBe(0);
@@ -96,10 +96,10 @@ test('assumeHue function should convert CSS approved angle units to numeric degr
   expect(assumeHue('.25turns')).toBeNaN();
   expect(assumeHue('200grad')).toBe(180);
   expect(assumeHue('0.25grad')).toBe(0.225);
-  expect(assumeHue('0.25rad')).toBe(14.3239449);
-  expect(assumeHue('.25RAD')).toBe(14.3239449);
-  expect(assumeHue('3.14rad')).toBe(179.9087477);
-  expect(assumeHue('-3.14rad')).toBe(180.0912523);
+  expect(assumeHue('0.25rad')).toBe(14.324);
+  expect(assumeHue('.25RAD')).toBe(14.324);
+  expect(assumeHue('3.14rad')).toBe(179.909);
+  expect(assumeHue('-3.14rad')).toBe(180.091);
   expect(assumeHue(90)).toBe(90);
 });
 
@@ -194,7 +194,7 @@ test('getHslSaturation function should calculate saturation based on chroma and 
   expect(getHslSaturation(0.45, 0.5)).toBe(0.45);
   expect(getHslSaturation('0.45', '0.5')).toBe(0.45);
   expect(getHslSaturation(0.05, 0.6)).toBe(0.0625);
-  expect(getHslSaturation(0.1, 0.3)).toBe(0.1666667);
+  expect(getHslSaturation(0.1, 0.3)).toBe(0.16667);
   expect(getHslSaturation(0, 0)).toBe(0);
   expect(getHslSaturation(1, 1)).toBe(1);
   expect(getHslSaturation(1, 'not a number')).toBeNaN();

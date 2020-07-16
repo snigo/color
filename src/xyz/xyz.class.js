@@ -10,10 +10,12 @@ import {
   D50_D65_MATRIX,
   D65,
   D65_D50_MATRIX,
+  XYZ_P3_MATRIX,
   XYZ_RGB_MATRIX,
 } from '../constants';
 import LabColor from '../lab/lab.class';
 import sRGBColor from '../srgb/srgb.class';
+import DisplayP3Color from '../p3/display-p3.class';
 
 class XYZColor {
   constructor({
@@ -38,6 +40,9 @@ class XYZColor {
       },
       whitePoint: {
         value: whitePoint,
+      },
+      profile: {
+        value: 'cie-xyz',
       },
     });
   }
@@ -101,7 +106,15 @@ class XYZColor {
       ? this
       : this.adapt(XYZColor.D65)).toXyzArray();
 
-    return sRGBColor.linArray(applyMatrix(xyz, XYZ_RGB_MATRIX));
+    return sRGBColor.linArray(applyMatrix(xyz, XYZ_RGB_MATRIX).concat(this.alpha));
+  }
+
+  toP3() {
+    const xyz = (equal(this.whitePoint, XYZColor.D65)
+      ? this
+      : this.adapt(XYZColor.D65)).toXyzArray();
+
+    return DisplayP3Color.linArray(applyMatrix(xyz, XYZ_P3_MATRIX).concat(this.alpha));
   }
 
   toXyz() {

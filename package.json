@@ -8,10 +8,8 @@
     "test": "__tests__"
   },
   "files": [
-    "index.d.ts",
     "lib"
   ],
-  "types": "index.d.ts",
   "scripts": {
     "lint": "eslint src/**",
     "test": "jest",

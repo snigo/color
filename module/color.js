@@ -1,7 +1,3 @@
-'use strict';
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
 const RGB_XYZ_MATRIX = [
   [0.4124564, 0.3575761, 0.1804375],
   [0.2126729, 0.7151522, 0.072175],
@@ -1842,12 +1838,4 @@ function color(descriptor, rgbProfile = 'srgb') {
   return undefined;
 }
 
-exports.DisplayP3Color = DisplayP3Color;
-exports.LabColor = LabColor;
-exports.XYZColor = XYZColor;
-exports.color = color;
-exports.contrast = contrast;
-exports.lerp = lerp;
-exports.mix = mix;
-exports.mixLab = mixLab;
-exports.sRGBColor = sRGBColor;
+export { DisplayP3Color, LabColor, XYZColor, color, contrast, lerp, mix, mixLab, sRGBColor };

@@ -43,6 +43,9 @@ class LabColor {
       whitePoint: {
         value: D50,
       },
+      profile: {
+        value: 'cie-lab',
+      },
     });
   }
 
@@ -152,6 +155,10 @@ class LabColor {
 
   toRgb() {
     return this.toXyz(D65).toRgb();
+  }
+
+  toP3() {
+    return this.toXyz(D65).toP3();
   }
 
   toLab() {

@@ -187,7 +187,7 @@ interface WCAGResponse {
   'wcag-aaa-large-text': boolean;
 }
 
-export type contrastCurry = (compareColor: AnyColor, precision?: number) => number;
+export function contrastCurry(compareColor: AnyColor, precision?: number): number;
 export namespace contrastCurry {
   export function find(descriptor: ContrastColorDescriptor): sRGBColor[];
   export function min(array: AnyColor[]): sRGBColor;

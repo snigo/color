@@ -8,6 +8,7 @@ import {
   CMA_RE,
 } from './constants';
 import sRGBColor from './srgb/srgb.class';
+import DisplayP3Color from './p3/display-p3.class';
 import LabColor from './lab/lab.class';
 import XYZColor from './xyz/xyz.class';
 
@@ -62,15 +63,15 @@ export function assumeAlpha(value) {
 }
 
 export function assumeByte(value) {
-  return clamp(BYTE_RANGE, round(value, 7));
+  return clamp(BYTE_RANGE, round(value, 3));
 }
 
 export function assumeChroma(value) {
-  return clamp(CHROMA_RANGE, round(value, 7));
+  return clamp(CHROMA_RANGE, round(value, 3));
 }
 
 export function assumeHue(value) {
-  if (typeof value === 'number') return round(modulo(value, 360), 7);
+  if (typeof value === 'number') return round(modulo(value, 360), 3);
   if (typeof value !== 'string') return NaN;
   value = value.trim().toLowerCase();
 
@@ -93,11 +94,11 @@ export function assumeHue(value) {
       return NaN;
   }
 
-  return round(modulo(hue[1], 360), 7);
+  return round(modulo(hue[1], 360), 3);
 }
 
 export function assumePercent(value) {
-  if (typeof value === 'number') return clamp(ONE_RANGE, round(value, 7));
+  if (typeof value === 'number') return clamp(ONE_RANGE, round(value, 5));
   if (typeof value !== 'string' || !/%$/.test(value)) return NaN;
   return clamp(ONE_RANGE, toNumber(value, 7));
 }
@@ -160,6 +161,7 @@ export function approx(a, b, delta = 0) {
 
 export function instanceOfColor(c) {
   return c instanceof sRGBColor
+    || c instanceof DisplayP3Color
     || c instanceof LabColor
     || c instanceof XYZColor;
 }

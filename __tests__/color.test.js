@@ -72,7 +72,7 @@ test('should parse hsla notation colors', () => {
 
 test('should parse hwba notation colors', () => {
   expect(color('hwb(666 0% 153%)').name).toBe('white');
-  expect(color('hwb( 400grad 40% 10% )').toHwbString()).toBe('hwb(0deg 40% 10.2%)');
+  expect(color('hwb( 400grad 40% 10% )').toHwbString()).toBe('hwb(0deg 40% 9.8%)');
   expect(color('hwb(0 0% 0%)').name).toBe('red');
   expect(color('hwb(-15 50% 35% / .45)').toHwbString(0)).toBe('hwb(345deg 50% 35% / 0.45)');
 });
