@@ -81,7 +81,7 @@ class LabColor {
         value: D50,
       },
       profile: {
-        value: 'lab',
+        value: 'cie-lab',
       },
     });
   }
@@ -875,7 +875,7 @@ class XYZColor {
         value: whitePoint,
       },
       profile: {
-        value: 'xyz',
+        value: 'cie-xyz',
       },
     });
   }
@@ -1815,15 +1815,22 @@ function color(descriptor, rgbProfile = 'srgb') {
     }
 
     if (descriptor.startsWith('rgb')) {
-      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).rgbArray(descriptor.includes(',') ? extractFnCommaGroups('rgb', descriptor) : extractFnWhitespaceGroups('rgb', descriptor));
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)
+        .rgbArray(descriptor.includes(',')
+          ? extractFnCommaGroups('rgb', descriptor)
+          : extractFnWhitespaceGroups('rgb', descriptor));
     }
 
     if (descriptor.startsWith('hsl')) {
-      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).hslArray(descriptor.includes(',') ? extractFnCommaGroups('hsl', descriptor) : extractFnWhitespaceGroups('hsl', descriptor));
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)
+        .hslArray(descriptor.includes(',')
+          ? extractFnCommaGroups('hsl', descriptor)
+          : extractFnWhitespaceGroups('hsl', descriptor));
     }
 
     if (descriptor.startsWith('hwb')) {
-      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color).hwbArray(extractFnWhitespaceGroups('hwb', descriptor));
+      return (rgbProfile === 'srgb' ? sRGBColor : DisplayP3Color)
+        .hwbArray(extractFnWhitespaceGroups('hwb', descriptor));
     }
 
     if (descriptor.startsWith('lab')) {

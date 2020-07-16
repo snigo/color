@@ -8,11 +8,11 @@ export default [
       format: 'iife',
       name: 'Color',
     },
-    // plugins: [
-    //   terser({
-    //     keep_classnames: true,
-    //   }),
-    // ],
+    plugins: [
+      terser({
+        keep_classnames: true,
+      }),
+    ],
   },
   {
     input: 'src/color.js',
