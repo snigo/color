@@ -1,7 +1,7 @@
 # color
 
 Greatly missing color functions and types for JavaScript.
-- Supports three color spaces: *sRGB*, *CIELab* and *CIEXYZ* with precise conversion between them.
+- Supports four color spaces: *sRGB*, *Display P3*, *CIELab* and *CIEXYZ* with precise conversion between them.
 - Zero dependencies
 - Parser doesn’t rely on browsers to parse color strings and could be used in any environment.
 - Understands all CSS colors and many more cool features!
