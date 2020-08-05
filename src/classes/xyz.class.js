@@ -1,10 +1,13 @@
 /* eslint-disable import/no-cycle */
+import LabColor from './lab.class';
+import sRGBColor from './srgb.class';
+import DisplayP3Color from './display-p3.class';
 import {
   applyMatrix,
   assumeAlpha,
   equal,
   round,
-} from '../utils';
+} from '../utils/utils';
 import {
   D50,
   D50_D65_MATRIX,
@@ -12,10 +15,7 @@ import {
   D65_D50_MATRIX,
   XYZ_P3_MATRIX,
   XYZ_RGB_MATRIX,
-} from '../constants';
-import LabColor from '../lab/lab.class';
-import sRGBColor from '../srgb/srgb.class';
-import DisplayP3Color from '../p3/display-p3.class';
+} from '../utils/constants';
 
 class XYZColor {
   constructor({

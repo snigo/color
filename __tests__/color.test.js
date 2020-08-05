@@ -3,7 +3,7 @@ import {
   sRGBColor,
   XYZColor,
   LabColor,
-} from '../src/color';
+} from '../src';
 
 test('should parse color in #-hexadecimal format', () => {
   const c1 = color('#ff0099ff');

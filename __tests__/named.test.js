@@ -1,4 +1,4 @@
-import { namedColors, getColorName, parseNamed } from '../src/named';
+import { namedColors, getColorName, parseNamed } from '../src/utils/named';
 
 test('correct format of parseNamed output', () => {
   expect(namedColors.size).toBe(438);

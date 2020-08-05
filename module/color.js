@@ -1,3 +1,449 @@
+const RGB_XYZ_MATRIX = [
+  [0.4124564, 0.3575761, 0.1804375],
+  [0.2126729, 0.7151522, 0.072175],
+  [0.0193339, 0.119192, 0.9503041],
+];
+
+const XYZ_RGB_MATRIX = [
+  [3.2404542, -1.5371385, -0.4985314],
+  [-0.969266, 1.8760108, 0.041556],
+  [0.0556434, -0.2040259, 1.0572252],
+];
+
+const P3_XYZ_MATRIX = [
+  [0.4865709486482162, 0.26566769316909306, 0.1982172852343625],
+  [0.2289745640697488, 0.6917385218365064, 0.079286914093745],
+  [0, 0.04511338185890264, 1.043944368900976],
+];
+
+const XYZ_P3_MATRIX = [
+  [2.493496911941425, -0.9313836179191239, -0.40271078445071684],
+  [-0.8294889695615747, 1.7626640603183463, 0.023624685841943577],
+  [0.03584583024378447, -0.07617238926804182, 0.9568845240076872],
+];
+
+const D65_D50_MATRIX = [
+  [1.0478112, 0.0228866, -0.0501270],
+  [0.0295424, 0.9904844, -0.0170491],
+  [-0.0092345, 0.0150436, 0.7521316],
+];
+
+const D50_D65_MATRIX = [
+  [0.9555766, -0.0230393, 0.0631636],
+  [-0.0282895, 1.0099416, 0.0210077],
+  [0.0122982, -0.020483, 1.3299098],
+];
+
+const D50 = [0.96422, 1, 0.82521];
+const D65 = [0.95047, 1, 1.08883];
+
+const OCT_RANGE = [0, 255];
+const ONE_RANGE = [0, 1];
+const BYTE_RANGE = [-127, 127];
+const CHROMA_RANGE = [0, 260];
+
+const HEX_RE = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/;
+const HEX_RE_S = /^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])?$/;
+const CMA_RE = /\(\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*(?:,\s*([0-9a-z.%+-]+)\s*)?\)$/;
+const WSP_RE = /\(\s*([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s*(?:\s+\/\s+([0-9a-z.%+-]+)\s*)?\)$/;
+
+/* eslint-disable import/no-cycle */
+
+function applyMatrix(xyz, matrix) {
+  if (!xyz || !(Array.isArray(xyz) && xyz.length)) return undefined;
+  if (!matrix || !(Array.isArray(matrix) && xyz.length === matrix.length)) return xyz;
+  return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[i][j], 0));
+}
+
+function clamp(range, value) {
+  value = +value;
+  if (value == null || Number.isNaN(value)) return NaN;
+  if (!Array.isArray(range)) return value;
+
+  if (value < range[0]) return range[0];
+  if (value > range[1]) return range[1];
+  return value;
+}
+
+function defined(...args) {
+  // eslint-disable-next-line eqeqeq
+  return args.every((arg) => arg || (!arg && arg == 0));
+}
+
+function fromFraction(range, value) {
+  if (!Array.isArray(range)) return NaN;
+  return range[0] + +value * (range[1] - range[0]);
+}
+
+function modulo(a, b) {
+  return ((+a % +b) + +b) % +b;
+}
+
+function round(num, precision = 12) {
+  return +(+(num * 10 ** precision).toFixed(0) * 10 ** -precision)
+    .toFixed(precision < 0 ? 0 : precision);
+}
+
+function toNumber(num, precision = 12) {
+  if (num == null || Array.isArray(num)) return NaN;
+  num = num.toString();
+  num = /%$/.test(num) ? +num.slice(0, -1) / 100 : +num;
+  if (precision !== undefined) {
+    num = round(num, precision);
+  }
+
+  return num;
+}
+
+function assumeAlpha(value) {
+  return defined(value) ? clamp(ONE_RANGE, toNumber(value, 4)) : 1;
+}
+
+function assumeByte(value) {
+  return clamp(BYTE_RANGE, round(value, 3));
+}
+
+function assumeChroma(value) {
+  return clamp(CHROMA_RANGE, round(value, 3));
+}
+
+function assumeHue(value) {
+  if (typeof value === 'number') return round(modulo(value, 360), 3);
+  if (typeof value !== 'string') return NaN;
+  value = value.trim().toLowerCase();
+
+  const hue = value.match(/^([+\-0-9e.]+)(turn|g?rad|deg)?$/);
+  if (!hue) return NaN;
+  hue[2] = hue[2] || 'deg';
+  switch (hue[2]) {
+    case 'turn':
+      hue[1] *= 360;
+      break;
+    case 'rad':
+      hue[1] *= (180 / Math.PI);
+      break;
+    case 'grad':
+      hue[1] *= 0.9;
+      break;
+    case 'deg':
+      break;
+    default:
+      return NaN;
+  }
+
+  return round(modulo(hue[1], 360), 3);
+}
+
+function assumePercent(value) {
+  if (typeof value === 'number') return clamp(ONE_RANGE, round(value, 5));
+  if (typeof value !== 'string' || !/%$/.test(value)) return NaN;
+  return clamp(ONE_RANGE, toNumber(value, 7));
+}
+
+function assumeOctet(value) {
+  if (typeof value === 'number') return clamp(OCT_RANGE, round(value, 0));
+  if (typeof value !== 'string') return NaN;
+  return clamp(OCT_RANGE, /%$/.test(value) ? round(fromFraction(OCT_RANGE, toNumber(value)), 0) : round(value, 0));
+}
+
+function equal(a, b) {
+  return a.every((e, i) => b[i] === e);
+}
+
+function extractGroups(re, str) {
+  return (re.exec(str.toLowerCase()) || []).filter((value, index) => index && !!value);
+}
+
+function extractFnCommaGroups(fn, str) {
+  const fnString = (fn === 'rgb' || fn === 'hsl') ? `${fn}a?` : fn;
+  const re = new RegExp(`^${fnString}${CMA_RE.source}`);
+  return extractGroups(re, str);
+}
+
+function extractFnWhitespaceGroups(fn, str) {
+  const fnString = (fn === 'rgb' || fn === 'hsl') ? `${fn}a?` : fn;
+  const re = new RegExp(`^${fnString}${WSP_RE.source}`);
+  return extractGroups(re, str);
+}
+
+function getFraction(range, value) {
+  if (!Array.isArray(range)) return NaN;
+  return (+value - range[0]) / (range[1] - range[0]);
+}
+
+function getHslSaturation(chroma, lightness) {
+  let saturation;
+
+  if (lightness > 0 && lightness <= 0.5) {
+    saturation = chroma / (2 * lightness);
+  } else {
+    saturation = chroma / ((2 - 2 * lightness) || lightness);
+  }
+
+  return assumePercent(saturation);
+}
+
+function hexToOctet(hex) {
+  return parseInt(hex.length === 1 ? hex.repeat(2) : hex.substring(0, 2), 16);
+}
+
+function octetToHex(num) {
+  num = clamp(OCT_RANGE, num);
+  return num.toString(16).padStart(2, '0');
+}
+
+function approx(a, b, delta = 0) {
+  return +Math.abs(a - b).toFixed(12) <= delta;
+}
+
+function getHueDiff(from, to, dir) {
+  const ccw = -(modulo(from - to, 360) || 360);
+  const cw = modulo(to - from, 360) || 360;
+  switch (dir) {
+    case -1:
+      return ccw;
+    case 1:
+      return cw;
+    case 0:
+    default:
+      return ((cw % 360 <= 180) ? cw : ccw);
+  }
+}
+
+/* eslint-disable import/no-cycle */
+
+class LabColor {
+  constructor({
+    lightness,
+    a,
+    b,
+    chroma,
+    hue,
+    alpha,
+  }) {
+    Object.defineProperties(this, {
+      lightness: {
+        value: lightness,
+      },
+      a: {
+        value: a,
+      },
+      b: {
+        value: b,
+      },
+      chroma: {
+        value: chroma,
+      },
+      hue: {
+        value: hue,
+      },
+      alpha: {
+        value: alpha,
+      },
+      whitePoint: {
+        value: D50,
+      },
+      profile: {
+        value: 'cie-lab',
+      },
+    });
+  }
+
+  static lab({
+    lightness,
+    a,
+    b,
+    alpha,
+  }) {
+    const _lightness = assumePercent(lightness);
+    const _a = assumeByte(a);
+    const _b = assumeByte(b);
+
+    if (!defined(_lightness, _a, _b)) return undefined;
+
+    return new LabColor({
+      lightness: _lightness,
+      a: _a,
+      b: _b,
+      chroma: assumeChroma(Math.sqrt(_a ** 2 + _b ** 2)),
+      hue: assumeHue((Math.atan2(round(_b, 3), round(_a, 3)) * 180) / Math.PI),
+      alpha: assumeAlpha(alpha),
+    });
+  }
+
+  static labArray([lightness, a, b, alpha]) {
+    return LabColor.lab({
+      lightness,
+      a,
+      b,
+      alpha,
+    });
+  }
+
+  static lch({
+    lightness,
+    chroma,
+    hue,
+    alpha,
+  }) {
+    const _lightness = assumePercent(lightness);
+    const _chroma = assumeChroma(chroma);
+    const _hue = assumeHue(hue);
+
+    if (!defined(_lightness, _chroma, _hue)) return undefined;
+
+    return new LabColor({
+      lightness: _lightness,
+      a: assumeByte(_chroma * Math.cos((_hue * Math.PI) / 180)),
+      b: assumeByte(_chroma * Math.sin((_hue * Math.PI) / 180)),
+      chroma: _chroma,
+      hue: _hue,
+      alpha: assumeAlpha(alpha),
+    });
+  }
+
+  static lchArray([lightness, chroma, hue, alpha]) {
+    return LabColor.lch({
+      lightness,
+      chroma,
+      hue,
+      alpha,
+    });
+  }
+
+  get hrad() {
+    return round(this.hue * (Math.PI / 180), 7);
+  }
+
+  get hgrad() {
+    return round(this.hue / 0.9, 7);
+  }
+
+  get hturn() {
+    return round(this.hue / 360, 7);
+  }
+
+  get luminance() {
+    return this.toXyz().y;
+  }
+
+  get mode() {
+    return +(this.luminance < 0.18);
+  }
+
+  toXyz(whitePoint = this.whitePoint) {
+    const e = 0.008856;
+    const k = 903.3;
+    const l = this.lightness * 100;
+    const fy = (l + 16) / 116;
+    const fx = this.a / 500 + fy;
+    const fz = fy - this.b / 200;
+    const [x, y, z] = [
+      fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k,
+      l > k * e ? ((l + 16) / 116) ** 3 : l / k,
+      fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k,
+    ].map((V, i) => round(V * this.whitePoint[i], 7));
+
+    return new XYZColor({
+      x,
+      y,
+      z,
+      alpha: this.alpha,
+      whitePoint: this.whitePoint,
+    }).adapt(whitePoint);
+  }
+
+  toRgb() {
+    return this.toXyz(D65).toRgb();
+  }
+
+  toP3() {
+    return this.toXyz(D65).toP3();
+  }
+
+  toLab() {
+    return this;
+  }
+
+  toGrayscale() {
+    return this.copyWith({
+      a: 0,
+      b: 0,
+    });
+  }
+
+  toLchString(precision = 3) {
+    return this.alpha < 1
+      ? `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg / ${this.alpha})`
+      : `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg)`;
+  }
+
+  toLabString(precision = 3) {
+    return this.alpha < 1
+      ? `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)} / ${this.alpha})`
+      : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
+  }
+
+  withAlpha(value = 1) {
+    if (this.alpha === value) return this;
+    return new LabColor({
+      lightness: this.lightness,
+      a: this.a,
+      b: this.b,
+      chroma: this.chroma,
+      hue: this.hue,
+      alpha: assumeAlpha(value),
+    });
+  }
+
+  copyWith(params) {
+    if ('a' in params || 'b' in params) {
+      return LabColor.lab({
+        lightness: this.lightness,
+        a: this.b,
+        b: this.b,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('hue' in params || 'chroma' in params) {
+      return LabColor.lch({
+        lightness: this.lightness,
+        chroma: this.chroma,
+        hue: this.hue,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('lightness' in params) {
+      return LabColor.lab({
+        lightness: this.lightness,
+        a: this.a,
+        b: this.b,
+        alpha: this.alpha,
+        ...params,
+      });
+    }
+
+    if ('alpha' in params) {
+      return this.opacity(params.alpha);
+    }
+
+    return this;
+  }
+
+  invert() {
+    return LabColor.lab({
+      lightness: this.lightness,
+      a: -this.a,
+      b: -this.b,
+      alpha: this.alpha,
+    });
+  }
+}
+
 // eslint-disable-next-line no-extend-native
 Map.prototype.setMany = function(key, value, ...aliases) {
   this.set(key, value);
@@ -412,7 +858,7 @@ class DisplayP3Color {
 
   get name() {
     const name = getColorName(this.toHexString().substring(0, 7));
-    return (this.alpha === 1 || !name) ? name : `${name}*`;
+    return (this.alpha === 1 || !name) ? `p3:${name}` : `p3:${name}*`;
   }
 
   toLin() {
@@ -454,6 +900,10 @@ class DisplayP3Color {
 
   toRgb() {
     return this.toXyz().toRgb();
+  }
+
+  toRgbEquiv() {
+    return new sRGBColor(this);
   }
 
   toGrayscale() {
@@ -983,6 +1433,10 @@ class sRGBColor {
     return this.toXyz().toP3();
   }
 
+  toP3Equiv() {
+    return new DisplayP3Color(this);
+  }
+
   toRgb() {
     return this;
   }
@@ -1096,154 +1550,15 @@ class sRGBColor {
   }
 }
 
-/* eslint-disable import/no-cycle */
-
-function applyMatrix(xyz, matrix) {
-  if (!xyz || !(Array.isArray(xyz) && xyz.length)) return undefined;
-  if (!matrix || !(Array.isArray(matrix) && xyz.length === matrix.length)) return xyz;
-  return xyz.map((_, i, _xyz) => _xyz.reduce((p, v, j) => p + v * matrix[i][j], 0));
-}
-
-function clamp(range, value) {
-  value = +value;
-  if (value == null || Number.isNaN(value)) return NaN;
-  if (!Array.isArray(range)) return value;
-
-  if (value < range[0]) return range[0];
-  if (value > range[1]) return range[1];
-  return value;
-}
-
-function defined(...args) {
-  // eslint-disable-next-line eqeqeq
-  return args.every((arg) => arg || (!arg && arg == 0));
-}
-
-function fromFraction(range, value) {
-  if (!Array.isArray(range)) return NaN;
-  return range[0] + +value * (range[1] - range[0]);
-}
-
-function modulo(a, b) {
-  return ((+a % +b) + +b) % +b;
-}
-
-function round(num, precision = 12) {
-  return +(+(num * 10 ** precision).toFixed(0) * 10 ** -precision)
-    .toFixed(precision < 0 ? 0 : precision);
-}
-
-function toNumber(num, precision = 12) {
-  if (num == null || Array.isArray(num)) return NaN;
-  num = num.toString();
-  num = /%$/.test(num) ? +num.slice(0, -1) / 100 : +num;
-  if (precision !== undefined) {
-    num = round(num, precision);
-  }
-
-  return num;
-}
-
-function assumeAlpha(value) {
-  return defined(value) ? clamp(ONE_RANGE, toNumber(value, 4)) : 1;
-}
-
-function assumeByte(value) {
-  return clamp(BYTE_RANGE, round(value, 3));
-}
-
-function assumeChroma(value) {
-  return clamp(CHROMA_RANGE, round(value, 3));
-}
-
-function assumeHue(value) {
-  if (typeof value === 'number') return round(modulo(value, 360), 3);
-  if (typeof value !== 'string') return NaN;
-  value = value.trim().toLowerCase();
-
-  const hue = value.match(/^([+\-0-9e.]+)(turn|g?rad|deg)?$/);
-  if (!hue) return NaN;
-  hue[2] = hue[2] || 'deg';
-  switch (hue[2]) {
-    case 'turn':
-      hue[1] *= 360;
-      break;
-    case 'rad':
-      hue[1] *= (180 / Math.PI);
-      break;
-    case 'grad':
-      hue[1] *= 0.9;
-      break;
-    case 'deg':
-      break;
-    default:
-      return NaN;
-  }
-
-  return round(modulo(hue[1], 360), 3);
-}
-
-function assumePercent(value) {
-  if (typeof value === 'number') return clamp(ONE_RANGE, round(value, 5));
-  if (typeof value !== 'string' || !/%$/.test(value)) return NaN;
-  return clamp(ONE_RANGE, toNumber(value, 7));
-}
-
-function assumeOctet(value) {
-  if (typeof value === 'number') return clamp(OCT_RANGE, round(value, 0));
-  if (typeof value !== 'string') return NaN;
-  return clamp(OCT_RANGE, /%$/.test(value) ? round(fromFraction(OCT_RANGE, toNumber(value)), 0) : round(value, 0));
-}
-
-function equal(a, b) {
-  return a.every((e, i) => b[i] === e);
-}
-
-function extractGroups(re, str) {
-  return (re.exec(str.toLowerCase()) || []).filter((value, index) => index && !!value);
-}
-
-function extractFnCommaGroups(fn, str) {
-  const fnString = (fn === 'rgb' || fn === 'hsl') ? `${fn}a?` : fn;
-  const re = new RegExp(`^${fnString}${CMA_RE.source}`);
-  return extractGroups(re, str);
-}
-
-function extractFnWhitespaceGroups(fn, str) {
-  const fnString = (fn === 'rgb' || fn === 'hsl') ? `${fn}a?` : fn;
-  const re = new RegExp(`^${fnString}${WSP_RE.source}`);
-  return extractGroups(re, str);
-}
-
-function getFraction(range, value) {
-  if (!Array.isArray(range)) return NaN;
-  return (+value - range[0]) / (range[1] - range[0]);
-}
-
-function getHslSaturation(chroma, lightness) {
-  let saturation;
-
-  if (lightness > 0 && lightness <= 0.5) {
-    saturation = chroma / (2 * lightness);
-  } else {
-    saturation = chroma / ((2 - 2 * lightness) || lightness);
-  }
-
-  return assumePercent(saturation);
-}
-
-function hexToOctet(hex) {
-  return parseInt(hex.length === 1 ? hex.repeat(2) : hex.substring(0, 2), 16);
-}
-
-function octetToHex(num) {
-  num = clamp(OCT_RANGE, num);
-  return num.toString(16).padStart(2, '0');
-}
-
-function approx(a, b, delta = 0) {
-  return +Math.abs(a - b).toFixed(12) <= delta;
-}
+const MODEL_PARAMS = {
+  rgb: [sRGBColor, ['red', 'green', 'blue', 'alpha']],
+  hsl: [sRGBColor, ['hue', 'saturation', 'lightness', 'alpha']],
+  lab: [LabColor, ['lightness', 'a', 'b', 'alpha']],
+  lch: [LabColor, ['lightness', 'chroma', 'hue', 'alpha']],
+  xyz: [XYZColor, ['x', 'y', 'z', 'alpha']],
+  'p3:rgb': [DisplayP3Color, ['red', 'green', 'blue', 'alpha']],
+  'p3:hsl': [DisplayP3Color, ['hue', 'saturation', 'lightness', 'alpha']],
+};
 
 function instanceOfColor(c) {
   return c instanceof sRGBColor
@@ -1270,315 +1585,6 @@ function applyModel(model, c) {
       return undefined;
   }
 }
-
-function getHueDiff(from, to, dir) {
-  const ccw = -(modulo(from - to, 360) || 360);
-  const cw = modulo(to - from, 360) || 360;
-  switch (dir) {
-    case -1:
-      return ccw;
-    case 1:
-      return cw;
-    case 0:
-    default:
-      return ((cw % 360 <= 180) ? cw : ccw);
-  }
-}
-
-/* eslint-disable import/no-cycle */
-
-class LabColor {
-  constructor({
-    lightness,
-    a,
-    b,
-    chroma,
-    hue,
-    alpha,
-  }) {
-    Object.defineProperties(this, {
-      lightness: {
-        value: lightness,
-      },
-      a: {
-        value: a,
-      },
-      b: {
-        value: b,
-      },
-      chroma: {
-        value: chroma,
-      },
-      hue: {
-        value: hue,
-      },
-      alpha: {
-        value: alpha,
-      },
-      whitePoint: {
-        value: D50,
-      },
-      profile: {
-        value: 'cie-lab',
-      },
-    });
-  }
-
-  static lab({
-    lightness,
-    a,
-    b,
-    alpha,
-  }) {
-    const _lightness = assumePercent(lightness);
-    const _a = assumeByte(a);
-    const _b = assumeByte(b);
-
-    if (!defined(_lightness, _a, _b)) return undefined;
-
-    return new LabColor({
-      lightness: _lightness,
-      a: _a,
-      b: _b,
-      chroma: assumeChroma(Math.sqrt(_a ** 2 + _b ** 2)),
-      hue: assumeHue((Math.atan2(round(_b, 3), round(_a, 3)) * 180) / Math.PI),
-      alpha: assumeAlpha(alpha),
-    });
-  }
-
-  static labArray([lightness, a, b, alpha]) {
-    return LabColor.lab({
-      lightness,
-      a,
-      b,
-      alpha,
-    });
-  }
-
-  static lch({
-    lightness,
-    chroma,
-    hue,
-    alpha,
-  }) {
-    const _lightness = assumePercent(lightness);
-    const _chroma = assumeChroma(chroma);
-    const _hue = assumeHue(hue);
-
-    if (!defined(_lightness, _chroma, _hue)) return undefined;
-
-    return new LabColor({
-      lightness: _lightness,
-      a: assumeByte(_chroma * Math.cos((_hue * Math.PI) / 180)),
-      b: assumeByte(_chroma * Math.sin((_hue * Math.PI) / 180)),
-      chroma: _chroma,
-      hue: _hue,
-      alpha: assumeAlpha(alpha),
-    });
-  }
-
-  static lchArray([lightness, chroma, hue, alpha]) {
-    return LabColor.lch({
-      lightness,
-      chroma,
-      hue,
-      alpha,
-    });
-  }
-
-  get hrad() {
-    return round(this.hue * (Math.PI / 180), 7);
-  }
-
-  get hgrad() {
-    return round(this.hue / 0.9, 7);
-  }
-
-  get hturn() {
-    return round(this.hue / 360, 7);
-  }
-
-  get luminance() {
-    return this.toXyz().y;
-  }
-
-  get mode() {
-    return +(this.luminance < 0.18);
-  }
-
-  toXyz(whitePoint = this.whitePoint) {
-    const e = 0.008856;
-    const k = 903.3;
-    const l = this.lightness * 100;
-    const fy = (l + 16) / 116;
-    const fx = this.a / 500 + fy;
-    const fz = fy - this.b / 200;
-    const [x, y, z] = [
-      fx ** 3 > e ? fx ** 3 : (116 * fx - 16) / k,
-      l > k * e ? ((l + 16) / 116) ** 3 : l / k,
-      fz ** 3 > e ? fz ** 3 : (116 * fz - 16) / k,
-    ].map((V, i) => round(V * this.whitePoint[i], 7));
-
-    return new XYZColor({
-      x,
-      y,
-      z,
-      alpha: this.alpha,
-      whitePoint: this.whitePoint,
-    }).adapt(whitePoint);
-  }
-
-  toRgb() {
-    return this.toXyz(D65).toRgb();
-  }
-
-  toP3() {
-    return this.toXyz(D65).toP3();
-  }
-
-  toLab() {
-    return this;
-  }
-
-  toGrayscale() {
-    return this.copyWith({
-      a: 0,
-      b: 0,
-    });
-  }
-
-  toLchString(precision = 3) {
-    return this.alpha < 1
-      ? `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg / ${this.alpha})`
-      : `lch(${round(this.lightness * 100, precision)}% ${round(this.chroma, precision)} ${round(this.hue, precision)}deg)`;
-  }
-
-  toLabString(precision = 3) {
-    return this.alpha < 1
-      ? `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)} / ${this.alpha})`
-      : `lab(${round(this.lightness * 100, precision)}% ${round(this.a, precision)} ${round(this.b, precision)})`;
-  }
-
-  withAlpha(value = 1) {
-    if (this.alpha === value) return this;
-    return new LabColor({
-      lightness: this.lightness,
-      a: this.a,
-      b: this.b,
-      chroma: this.chroma,
-      hue: this.hue,
-      alpha: assumeAlpha(value),
-    });
-  }
-
-  copyWith(params) {
-    if ('a' in params || 'b' in params) {
-      return LabColor.lab({
-        lightness: this.lightness,
-        a: this.b,
-        b: this.b,
-        alpha: this.alpha,
-        ...params,
-      });
-    }
-
-    if ('hue' in params || 'chroma' in params) {
-      return LabColor.lch({
-        lightness: this.lightness,
-        chroma: this.chroma,
-        hue: this.hue,
-        alpha: this.alpha,
-        ...params,
-      });
-    }
-
-    if ('lightness' in params) {
-      return LabColor.lab({
-        lightness: this.lightness,
-        a: this.a,
-        b: this.b,
-        alpha: this.alpha,
-        ...params,
-      });
-    }
-
-    if ('alpha' in params) {
-      return this.opacity(params.alpha);
-    }
-
-    return this;
-  }
-
-  invert() {
-    return LabColor.lab({
-      lightness: this.lightness,
-      a: -this.a,
-      b: -this.b,
-      alpha: this.alpha,
-    });
-  }
-}
-
-/* eslint-disable import/no-cycle */
-
-const RGB_XYZ_MATRIX = [
-  [0.4124564, 0.3575761, 0.1804375],
-  [0.2126729, 0.7151522, 0.072175],
-  [0.0193339, 0.119192, 0.9503041],
-];
-
-const XYZ_RGB_MATRIX = [
-  [3.2404542, -1.5371385, -0.4985314],
-  [-0.969266, 1.8760108, 0.041556],
-  [0.0556434, -0.2040259, 1.0572252],
-];
-
-const P3_XYZ_MATRIX = [
-  [0.4865709486482162, 0.26566769316909306, 0.1982172852343625],
-  [0.2289745640697488, 0.6917385218365064, 0.079286914093745],
-  [0, 0.04511338185890264, 1.043944368900976],
-];
-
-const XYZ_P3_MATRIX = [
-  [2.493496911941425, -0.9313836179191239, -0.40271078445071684],
-  [-0.8294889695615747, 1.7626640603183463, 0.023624685841943577],
-  [0.03584583024378447, -0.07617238926804182, 0.9568845240076872],
-];
-
-const D65_D50_MATRIX = [
-  [1.0478112, 0.0228866, -0.0501270],
-  [0.0295424, 0.9904844, -0.0170491],
-  [-0.0092345, 0.0150436, 0.7521316],
-];
-
-const D50_D65_MATRIX = [
-  [0.9555766, -0.0230393, 0.0631636],
-  [-0.0282895, 1.0099416, 0.0210077],
-  [0.0122982, -0.020483, 1.3299098],
-];
-
-const D50 = [0.96422, 1, 0.82521];
-const D65 = [0.95047, 1, 1.08883];
-
-const OCT_RANGE = [0, 255];
-const ONE_RANGE = [0, 1];
-const BYTE_RANGE = [-128, 127];
-const CHROMA_RANGE = [0, 260];
-
-const HEX_RE = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/;
-const HEX_RE_S = /^#([0-9a-f])([0-9a-f])([0-9a-f])([0-9a-f])?$/;
-const CMA_RE = /\(\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*,\s*([0-9a-z.%+-]+)\s*(?:,\s*([0-9a-z.%+-]+)\s*)?\)$/;
-const WSP_RE = /\(\s*([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s+([0-9a-z.%+-]+)\s*(?:\s+\/\s+([0-9a-z.%+-]+)\s*)?\)$/;
-
-const MODEL_PARAMS = {
-  rgb: [sRGBColor, ['red', 'green', 'blue', 'alpha']],
-  hsl: [sRGBColor, ['hue', 'saturation', 'lightness', 'alpha']],
-  lab: [LabColor, ['lightness', 'a', 'b', 'alpha']],
-  lch: [LabColor, ['lightness', 'chroma', 'hue', 'alpha']],
-  xyz: [XYZColor, ['x', 'y', 'z', 'alpha']],
-  'p3:rgb': [DisplayP3Color, ['red', 'green', 'blue', 'alpha']],
-  'p3:hsl': [DisplayP3Color, ['hue', 'saturation', 'lightness', 'alpha']],
-};
 
 function mix(model = 'rgb', descriptor) {
   if (typeof model !== 'string') return undefined;
@@ -1644,6 +1650,24 @@ function contrast(base = '#fff', compareColor, precision = 2) {
 
   return round((light + 0.05) / (dark + 0.05), precision);
 }
+
+contrast.closest = (base, targetContrast, colorArray) => {
+  const _base = instanceOfColor(base) ? base : color(base);
+  if (!_base) return undefined;
+
+  let output;
+  let diff = 22;
+
+  colorArray.forEach((c) => {
+    const _d = Math.abs(contrast(_base, c) - targetContrast) || 100;
+    if (_d < diff) {
+      output = c;
+      diff = _d;
+    }
+  });
+
+  return output;
+};
 
 contrast.min = (base, colorArray) => {
   const _base = instanceOfColor(base) ? base : color(base);
@@ -1775,36 +1799,36 @@ function lerp(model = 'rgb', descriptor) {
   if (!descriptor) return (descriptor) => lerp(model, descriptor);
 
   const {
-    from,
-    to,
+    start,
+    end,
     stops = 1,
     hueDirection = 0,
     includeLast = true,
   } = descriptor;
 
   model = model.trim().toLowerCase();
-  const _from = applyModel(model, from);
-  const _to = applyModel(model, to);
-  if (!_from || !_to) return undefined;
+  const _start = applyModel(model, start);
+  const _end = applyModel(model, end);
+  if (!_start || !_end) return undefined;
 
-  const output = [_from];
+  const output = [_start];
   let _stops = parseInt(stops, 10);
-  if (!_stops || _stops < 0) return includeLast ? output.concat(_to) : output;
+  if (!_stops || _stops < 0) return includeLast ? output.concat(_end) : output;
   if (_stops > 255) _stops = 255;
 
   const [ColorConstructor, params] = MODEL_PARAMS[model];
   if (model.startsWith('p3:')) model = model.substring(3);
 
   const deltas = params.map((p) => p === 'hue'
-    ? getHueDiff(_from[p], _to[p], hueDirection) / (_stops + 1)
-    : (_to[p] - _from[p]) / (_stops + 1));
+    ? getHueDiff(_start[p], _end[p], hueDirection) / (_stops + 1)
+    : (_end[p] - _start[p]) / (_stops + 1));
 
   while (_stops > 0) {
-    output.push(ColorConstructor[`${model}Array`](params.map((p, i) => _from[p] + deltas[i] * output.length)));
+    output.push(ColorConstructor[`${model}Array`](params.map((p, i) => _start[p] + deltas[i] * output.length)));
     _stops -= 1;
   }
 
-  return includeLast ? output.concat(_to) : output;
+  return includeLast ? output.concat(_end) : output;
 }
 
 /* eslint-disable import/no-cycle */

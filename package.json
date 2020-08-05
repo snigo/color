@@ -1,6 +1,6 @@
 {
   "name": "@snigos/color",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "Greatly missing color functions and types for JavaScript. Supports three color spaces: *sRGB*, *CIELab* and *CIEXYZ* with precise conversion between them. Zero dependencies. Parser doesn’t rely on browser to parse color strings and could be used in any environment. Understands all CSS colors and many more cool features!",
   "main": "lib/color.js",
   "directories": {
@@ -30,7 +30,13 @@
     "cielab",
     "xyz",
     "ciexyz",
-    "srgb"
+    "srgb",
+    "display-p3",
+    "p3-color",
+    "mix",
+    "contrast",
+    "lerp",
+    "gradient"
   ],
   "author": "snigo",
   "license": "MIT",
@@ -39,15 +45,15 @@
   },
   "homepage": "https://github.com/snigo/color#readme",
   "devDependencies": {
-    "@babel/core": "^7.10.4",
-    "@babel/preset-env": "^7.10.4",
-    "babel-jest": "^26.1.0",
-    "eslint": "^7.3.1",
+    "@babel/core": "^7.11.1",
+    "@babel/preset-env": "^7.11.0",
+    "babel-jest": "^26.2.2",
+    "eslint": "^7.6.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^23.17.1",
-    "jest": "^26.1.0",
-    "rollup": "^2.18.2",
+    "eslint-plugin-jest": "^23.20.0",
+    "jest": "^26.2.2",
+    "rollup": "^2.23.0",
     "rollup-plugin-terser": "^6.1.0"
   },
   "dependencies": {}

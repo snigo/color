@@ -1,4 +1,3 @@
-/* eslint-disable import/no-cycle */
 import {
   BYTE_RANGE,
   CHROMA_RANGE,
@@ -7,11 +6,6 @@ import {
   WSP_RE,
   CMA_RE,
 } from './constants';
-import sRGBColor from './srgb/srgb.class';
-import DisplayP3Color from './p3/display-p3.class';
-import LabColor from './lab/lab.class';
-import XYZColor from './xyz/xyz.class';
-import { color } from './color';
 
 export function applyMatrix(xyz, matrix) {
   if (!xyz || !(Array.isArray(xyz) && xyz.length)) return undefined;
@@ -160,32 +154,6 @@ export function approx(a, b, delta = 0) {
   return +Math.abs(a - b).toFixed(12) <= delta;
 }
 
-export function instanceOfColor(c) {
-  return c instanceof sRGBColor
-    || c instanceof DisplayP3Color
-    || c instanceof LabColor
-    || c instanceof XYZColor;
-}
-
-export function applyModel(model, c) {
-  if (!c) return undefined;
-  switch (model) {
-    case 'rgb':
-    case 'hsl':
-      return instanceOfColor(c) ? c.toRgb() : applyModel(model, color(c));
-    case 'lab':
-    case 'lch':
-      return instanceOfColor(c) ? c.toLab() : applyModel(model, color(c));
-    case 'xyz':
-      return instanceOfColor(c) ? c.toXyz() : applyModel(model, color(c));
-    case 'p3:rgb':
-    case 'p3:hsl':
-      return instanceOfColor(c) ? c.toP3() : applyModel(model, color(c));
-    default:
-      return undefined;
-  }
-}
-
 export function getHueDiff(from, to, dir) {
   const ccw = -(modulo(from - to, 360) || 360);
   const cw = modulo(to - from, 360) || 360;
@@ -198,4 +166,9 @@ export function getHueDiff(from, to, dir) {
     default:
       return ((cw % 360 <= 180) ? cw : ccw);
   }
+}
+
+export function rnd(range = [0, 1], precision = 12) {
+  const [min, max] = range;
+  return round(min + Math.random() * (max - min), precision);
 }

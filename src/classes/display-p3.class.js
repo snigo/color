@@ -1,12 +1,13 @@
 /* eslint-disable import/no-cycle */
-import XYZColor from '../xyz/xyz.class';
+import sRGBColor from './srgb.class';
+import XYZColor from './xyz.class';
 
 import {
   D50,
   D65,
   OCT_RANGE,
-  RGB_XYZ_MATRIX,
-} from '../constants';
+  P3_XYZ_MATRIX,
+} from '../utils/constants';
 
 import {
   applyMatrix,
@@ -20,12 +21,11 @@ import {
   octetToHex,
   round,
   defined,
-} from '../utils';
+} from '../utils/utils';
 
-import { getColorName } from '../named';
-import DisplayP3Color from '../p3/display-p3.class';
+import { getColorName } from '../utils/named';
 
-class sRGBColor {
+class DisplayP3Color {
   constructor({
     red,
     green,
@@ -61,7 +61,7 @@ class sRGBColor {
         value: D65,
       },
       profile: {
-        value: 'srgb',
+        value: 'display-p3',
       },
     });
   }
@@ -101,7 +101,7 @@ class sRGBColor {
     const lightness = (max + min) / 2;
     const saturation = getHslSaturation(chroma, lightness);
 
-    return new sRGBColor({
+    return new DisplayP3Color({
       red: _red,
       green: _green,
       blue: _blue,
@@ -113,7 +113,7 @@ class sRGBColor {
   }
 
   static rgbArray([red, green, blue, alpha]) {
-    return sRGBColor.rgb({
+    return DisplayP3Color.rgb({
       red,
       green,
       blue,
@@ -132,11 +132,11 @@ class sRGBColor {
       .map((V) => V * 255)
       .concat(alpha);
 
-    return sRGBColor.rgbArray(rgba);
+    return DisplayP3Color.rgbArray(rgba);
   }
 
   static linArray([red, green, blue, alpha]) {
-    return sRGBColor.lin({
+    return DisplayP3Color.lin({
       red,
       green,
       blue,
@@ -190,7 +190,7 @@ class sRGBColor {
       blue = x;
     }
 
-    return new sRGBColor({
+    return new DisplayP3Color({
       red: assumeOctet((red + b) * 255),
       green: assumeOctet((green + b) * 255),
       blue: assumeOctet((blue + b) * 255),
@@ -202,7 +202,7 @@ class sRGBColor {
   }
 
   static hslArray([hue, saturation, lightness, alpha]) {
-    return sRGBColor.hsl({
+    return DisplayP3Color.hsl({
       hue,
       saturation,
       lightness,
@@ -222,7 +222,7 @@ class sRGBColor {
     const lightness = (1 - _whiteness + _blackness) / 2;
     const chroma = 1 - _whiteness - _blackness;
     const saturation = getHslSaturation(chroma, lightness);
-    return sRGBColor.hsl({
+    return DisplayP3Color.hsl({
       hue: assumeHue(hue),
       saturation,
       lightness,
@@ -231,7 +231,7 @@ class sRGBColor {
   }
 
   static hwbArray([hue, whiteness, blackness, alpha]) {
-    return sRGBColor.hwb({
+    return DisplayP3Color.hwb({
       hue,
       whiteness,
       blackness,
@@ -269,7 +269,7 @@ class sRGBColor {
 
   get name() {
     const name = getColorName(this.toHexString().substring(0, 7));
-    return (this.alpha === 1 || !name) ? name : `${name}*`;
+    return (this.alpha === 1 || !name) ? `p3:${name}` : `p3:${name}*`;
   }
 
   toLin() {
@@ -291,7 +291,7 @@ class sRGBColor {
   }
 
   toXyz(whitePoint = this.whitePoint) {
-    const [x, y, z] = applyMatrix(this.toLin(), RGB_XYZ_MATRIX);
+    const [x, y, z] = applyMatrix(this.toLin(), P3_XYZ_MATRIX);
     return new XYZColor({
       x,
       y,
@@ -306,15 +306,15 @@ class sRGBColor {
   }
 
   toP3() {
-    return this.toXyz().toP3();
-  }
-
-  toP3Equiv() {
-    return new DisplayP3Color(this);
+    return this;
   }
 
   toRgb() {
-    return this;
+    return this.toXyz().toRgb();
+  }
+
+  toRgbEquiv() {
+    return new sRGBColor(this);
   }
 
   toGrayscale() {
@@ -322,7 +322,7 @@ class sRGBColor {
     const l = this.luminance > 0.0393
       ? ((this.luminance ** (1 / 2.4)) * 1.055 - 0.055) * 255
       : this.luminance * 3294.6;
-    return sRGBColor.rgb({
+    return DisplayP3Color.rgb({
       red: l,
       green: l,
       blue: l,
@@ -332,26 +332,26 @@ class sRGBColor {
 
   toRgbString(format = 'absolute') {
     const _red = format === 'relative'
-      ? `${round(getFraction(OCT_RANGE, this.red) * 100, 1)}%`
+      ? `${round(getFraction(OCT_RANGE, this.red) * 100, 3)}%`
       : this.red;
     const _green = format === 'relative'
-      ? `${round(getFraction(OCT_RANGE, this.green) * 100, 1)}%`
+      ? `${round(getFraction(OCT_RANGE, this.green) * 100, 3)}%`
       : this.green;
     const _blue = format === 'relative'
-      ? `${round(getFraction(OCT_RANGE, this.blue) * 100, 1)}%`
+      ? `${round(getFraction(OCT_RANGE, this.blue) * 100, 3)}%`
       : this.blue;
     const _alpha = format === 'relative'
       ? `${round(this.alpha * 100, 0)}%`
       : this.alpha;
     return this.alpha < 1
-      ? `rgb(${_red} ${_green} ${_blue} / ${_alpha})`
-      : `rgb(${_red} ${_green} ${_blue})`;
+      ? `p3:rgb(${_red} ${_green} ${_blue} / ${_alpha})`
+      : `p3:rgb(${_red} ${_green} ${_blue})`;
   }
 
   toColorString() {
-    const _red = round(getFraction(OCT_RANGE, this.red), 3);
-    const _green = round(getFraction(OCT_RANGE, this.green), 3);
-    const _blue = round(getFraction(OCT_RANGE, this.blue), 3);
+    const _red = round(getFraction(OCT_RANGE, this.red), 5);
+    const _green = round(getFraction(OCT_RANGE, this.green), 5);
+    const _blue = round(getFraction(OCT_RANGE, this.blue), 5);
 
     return this.alpha < 1
       ? `color(${this.profile} ${_red} ${_green} ${_blue} / ${this.alpha})`
@@ -364,20 +364,20 @@ class sRGBColor {
 
   toHslString(precision = 1) {
     return this.alpha < 1
-      ? `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
-      : `hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
+      ? `p3:hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}% / ${this.alpha})`
+      : `p3:hsl(${round(this.hue, precision)}deg ${round(this.saturation * 100, precision)}% ${round(this.lightness * 100, precision)}%)`;
   }
 
   toHwbString(precision = 1) {
     const [h, w, b] = this.toHwb();
     return this.alpha < 1
-      ? `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
-      : `hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
+      ? `p3:hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}% / ${this.alpha})`
+      : `p3:hwb(${round(h, precision)}deg ${round(w * 100, precision)}% ${round(b * 100, precision)}%)`;
   }
 
   withAlpha(value = 1) {
     if (this.alpha === value) return this;
-    return new sRGBColor({
+    return new DisplayP3Color({
       red: this.red,
       green: this.green,
       blue: this.blue,
@@ -389,7 +389,7 @@ class sRGBColor {
   }
 
   invert() {
-    return sRGBColor.rgb({
+    return DisplayP3Color.rgb({
       red: 255 - this.red,
       green: 255 - this.green,
       blue: 255 - this.blue,
@@ -399,7 +399,7 @@ class sRGBColor {
 
   copyWith(params) {
     if ('red' in params || 'blue' in params || 'green' in params) {
-      return sRGBColor.rgb({
+      return DisplayP3Color.rgb({
         red: this.red,
         green: this.green,
         blue: this.blue,
@@ -409,7 +409,7 @@ class sRGBColor {
     }
 
     if ('hue' in params || 'saturation' in params || 'lightness' in params) {
-      return sRGBColor.hsl({
+      return DisplayP3Color.hsl({
         hue: this.hue,
         saturation: this.saturation,
         lightness: this.lightness,
@@ -419,11 +419,11 @@ class sRGBColor {
     }
 
     if ('alpha' in params) {
-      return this.opacity(params.alpha);
+      return this.withAlpha(params.alpha);
     }
 
     return this;
   }
 }
 
-export default sRGBColor;
+export default DisplayP3Color;

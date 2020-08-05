@@ -1,5 +1,5 @@
-import { assumePercent, applyModel, getHueDiff } from './utils';
-import { MODEL_PARAMS } from './constants';
+import { applyModel, MODEL_PARAMS } from './utils/model';
+import { assumePercent, getHueDiff } from './utils/utils';
 
 export default function mix(model = 'rgb', descriptor) {
   if (typeof model !== 'string') return undefined;

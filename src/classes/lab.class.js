@@ -1,4 +1,5 @@
 /* eslint-disable import/no-cycle */
+import XYZColor from './xyz.class';
 import {
   assumeAlpha,
   assumeByte,
@@ -7,10 +8,9 @@ import {
   assumePercent,
   defined,
   round,
-} from '../utils';
+} from '../utils/utils';
 
-import { D50, D65 } from '../constants';
-import XYZColor from '../xyz/xyz.class';
+import { D50, D65 } from '../utils/constants';
 
 class LabColor {
   constructor({
@@ -228,7 +228,7 @@ class LabColor {
     }
 
     if ('alpha' in params) {
-      return this.opacity(params.alpha);
+      return this.withAlpha(params.alpha);
     }
 
     return this;

@@ -1,8 +1,7 @@
-/* eslint-disable import/no-cycle */
 import {
   HEX_RE,
   HEX_RE_S,
-} from './constants';
+} from './utils/constants';
 import {
   defined,
   extractFnCommaGroups,
@@ -10,12 +9,12 @@ import {
   extractGroups,
   hexToOctet,
   round,
-} from './utils';
-import sRGBColor from './srgb/srgb.class';
-import DisplayP3Color from './p3/display-p3.class';
-import XYZColor from './xyz/xyz.class';
-import LabColor from './lab/lab.class';
-import { namedColors, parseNamed } from './named';
+} from './utils/utils';
+import sRGBColor from './classes/srgb.class';
+import DisplayP3Color from './classes/display-p3.class';
+import XYZColor from './classes/xyz.class';
+import LabColor from './classes/lab.class';
+import { namedColors, parseNamed } from './utils/named';
 
 function color(descriptor, rgbProfile = 'srgb') {
   if (typeof descriptor === 'object') {
@@ -99,14 +98,4 @@ function color(descriptor, rgbProfile = 'srgb') {
   return undefined;
 }
 
-export {
-  color,
-  LabColor,
-  sRGBColor,
-  DisplayP3Color,
-  XYZColor,
-};
-
-export { default as contrast } from './contrast';
-export { default as lerp } from './lerp';
-export { default as mix } from './mix';
+export default color;

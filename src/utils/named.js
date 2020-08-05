@@ -1,19 +1,19 @@
-// eslint-disable-next-line no-extend-native
-Map.prototype.setMany = function(key, value, ...aliases) {
-  this.set(key, value);
-  this.set(value, key);
-  aliases.forEach((alias) => {
-    this.set(alias, value);
-  });
-  return this;
-};
+class ColorMap extends Map {
+  setMany(key, value, ...aliases) {
+    this.set(key, value);
+    this.set(value, key);
+    aliases.forEach((alias) => {
+      this.set(alias, value);
+    });
+    return this;
+  }
 
-// eslint-disable-next-line no-extend-native
-Map.prototype.getPrimaryKey = function(key) {
-  return this.get(this.get(key));
-};
+  getPrimaryKey(key) {
+    return this.get(this.get(key));
+  }
+}
 
-export const namedColors = new Map();
+export const namedColors = new ColorMap();
 
 namedColors.setMany('aliceblue', [240, 248, 255, 208, 1, 0.97, 1], '#f0f8ff');
 namedColors.setMany('antiquewhite', [250, 235, 215, 34, 0.78, 0.91, 1], '#faebd7');

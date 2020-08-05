@@ -18,16 +18,18 @@ import {
   getFraction,
   getHslSaturation,
   hexToOctet,
-  instanceOfColor,
   modulo,
   octetToHex,
   round,
   toNumber,
-} from '../src/utils';
-import { color } from '../src/color';
-import XYZColor from '../src/xyz/xyz.class';
-import sRGBColor from '../src/srgb/srgb.class';
-import LabColor from '../src/lab/lab.class';
+} from '../src/utils/utils';
+import { instanceOfColor } from '../src/utils/model';
+import {
+  color,
+  sRGBColor,
+  LabColor,
+  XYZColor,
+} from '../src';
 
 test('applyMatrix helper function', () => {
   const xyz = [1, 2, 3];
@@ -67,13 +69,13 @@ test('assumeAlpha function should convert alpha value to corresponding numeric',
   expect(assumeAlpha(4.2)).toBe(1);
 });
 
-test('assumeByte function should convert byte value [-128...127] to corresponding numeric', () => {
+test('assumeByte function should convert byte value [-127...127] to corresponding numeric', () => {
   expect(assumeByte('0x0f')).toBe(15);
   expect(assumeByte('-37')).toBe(-37);
   expect(assumeByte('0.361432353365865785673567547')).toBe(0.361);
   expect(assumeByte('3.4e2')).toBe(127);
   expect(assumeByte(42)).toBe(42);
-  expect(assumeByte(-214.2)).toBe(-128);
+  expect(assumeByte(-214.2)).toBe(-127);
   expect(assumeByte('34%')).toBeNaN();
 });
 

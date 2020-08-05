@@ -1,5 +1,4 @@
-import contrast from '../src/contrast';
-import { sRGBColor } from '../src/color';
+import { contrast, sRGBColor } from '../src';
 
 test('contrast function and its methods', () => {
   expect(typeof contrast).toBe('function');
@@ -32,17 +31,17 @@ test('contrast function should correctly calculate contrast', () => {
 
 test('contrast.find method should find color by hue, saturation and target contrast', () => {
   const baseContrast = contrast('aliceblue');
-  const target = 4.5;
+  const targetContrast = 4.5;
   const response = baseContrast.find({
     hue: 294,
     saturation: 0.45,
-    targetContrast: target,
+    targetContrast,
   });
   expect(Array.isArray(response)).toBe(true);
   expect(response).toHaveLength(1);
   expect(response[0].hue).toBe(294);
   expect(response[0].saturation).toBe(0.45);
-  expect(baseContrast(response[0])).toBeCloseTo(target, 1);
+  expect(baseContrast(response[0])).toBeCloseTo(targetContrast, 1);
 });
 
 test('contrast.min method should find color with minimum contrast value', () => {

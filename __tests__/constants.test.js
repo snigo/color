@@ -14,7 +14,7 @@ import {
   HEX_RE_S,
   CMA_RE,
   WSP_RE,
-} from '../src/constants';
+} from '../src/utils/constants';
 
 test('constants', () => {
   expect(Array.isArray(RGB_XYZ_MATRIX)).toBe(true);

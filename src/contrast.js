@@ -1,16 +1,11 @@
-import sRGBColor from './srgb/srgb.class';
-import { color } from './color';
-import {
-  round,
-  approx,
-  instanceOfColor,
-  applyModel,
-} from './utils';
+import sRGBColor from './classes/srgb.class';
+import LabColor from './classes/lab.class';
+import XYZColor from './classes/xyz.class';
+import DisplayP3Color from './classes/display-p3.class';
+import color from './color';
 import mix from './mix';
-import LabColor from './lab/lab.class';
-import XYZColor from './xyz/xyz.class';
-import DisplayP3Color from './p3/display-p3.class';
-import { MODEL_PARAMS } from './constants';
+import { round, approx } from './utils/utils';
+import { applyModel, instanceOfColor, MODEL_PARAMS } from './utils/model';
 
 function contrast(base = '#fff', compareColor, precision = 2) {
   const _base = instanceOfColor(base) ? base : color(base);
@@ -47,6 +42,24 @@ function contrast(base = '#fff', compareColor, precision = 2) {
 
   return round((light + 0.05) / (dark + 0.05), precision);
 }
+
+contrast.closest = (base, targetContrast, colorArray) => {
+  const _base = instanceOfColor(base) ? base : color(base);
+  if (!_base) return undefined;
+
+  let output;
+  let diff = 22;
+
+  colorArray.forEach((c) => {
+    const _d = Math.abs(contrast(_base, c) - targetContrast) || 100;
+    if (_d < diff) {
+      output = c;
+      diff = _d;
+    }
+  });
+
+  return output;
+};
 
 contrast.min = (base, colorArray) => {
   const _base = instanceOfColor(base) ? base : color(base);
